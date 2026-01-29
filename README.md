@@ -76,11 +76,37 @@ Claude stops and asks at these points:
 
 ---
 
+## Agent Modes
+
+Three behavior modes available. Switch by copying the one you want to `CLAUDE.md`:
+
+| Mode | File | Best For |
+|------|------|----------|
+| Semi-Autonomous | `CLAUDE.md` (default) | Balanced collaboration |
+| Fully Autonomous | `CLAUDE-autonomous.md` | Speed, experienced devs |
+| Guided | `CLAUDE-guided.md` | Learning, beginners |
+
+**To switch modes:**
+```bash
+# For fully autonomous (no questions, just builds)
+cp CLAUDE-autonomous.md CLAUDE.md
+
+# For guided mode (more teaching, more questions)
+cp CLAUDE-guided.md CLAUDE.md
+
+# To restore default semi-autonomous
+git checkout CLAUDE.md
+```
+
+---
+
 ## What's Included
 
 ```
 GameJamAgent/
 ├── CLAUDE.md              ← Agent brain (semi-autonomous behavior)
+├── CLAUDE-autonomous.md   ← Fully autonomous mode
+├── CLAUDE-guided.md       ← Guided/teaching mode
 ├── README.md              ← You are here
 │
 ├── .claude/
