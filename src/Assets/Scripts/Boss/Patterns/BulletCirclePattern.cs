@@ -150,8 +150,14 @@ public class BulletCirclePattern : BossAttackPattern
 
     private Sprite CreateCircleSprite()
     {
+        // Try to get better sprite from RuntimeAssetLoader
+        var sprite = RuntimeAssetLoader.GetEffectSprite("Projectile");
+        if (sprite != null) return sprite;
+
+        // Fallback to procedural generation with glow effect
         int size = 32;
         Texture2D tex = new Texture2D(size, size);
+        tex.filterMode = FilterMode.Point;
         Color[] colors = new Color[size * size];
         Vector2 center = new Vector2(size / 2f, size / 2f);
         float radius = size / 2f;
@@ -161,7 +167,17 @@ public class BulletCirclePattern : BossAttackPattern
             for (int x = 0; x < size; x++)
             {
                 float dist = Vector2.Distance(new Vector2(x, y), center);
-                colors[y * size + x] = dist < radius ? Color.white : Color.clear;
+                if (dist < radius)
+                {
+                    // Inner glow - brighter in center
+                    float brightness = 1f - (dist / radius) * 0.4f;
+                    float alpha = 1f - (dist / radius) * 0.3f;
+                    colors[y * size + x] = new Color(brightness, brightness, brightness, alpha);
+                }
+                else
+                {
+                    colors[y * size + x] = Color.clear;
+                }
             }
         }
 

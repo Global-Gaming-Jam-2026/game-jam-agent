@@ -36,14 +36,39 @@ public class BossInitializer : MonoBehaviour
             currentBoss = GameConfig.Instance.selectedBoss;
         }
 
+        // Fallback to RuntimeAssetLoader if no data found
+        if (currentBoss == null)
+        {
+            currentBoss = RuntimeAssetLoader.GetDefaultBoss();
+            Debug.Log("[BossInitializer] Using RuntimeAssetLoader default boss");
+        }
+
         if (currentBoss != null)
         {
             ApplyBossData();
         }
         else
         {
-            Debug.Log("No BossData found - using default values");
+            Debug.LogWarning("No BossData found - applying fallback visuals");
+            ApplyFallbackVisuals();
         }
+    }
+
+    private void ApplyFallbackVisuals()
+    {
+        // Apply runtime-generated sprite even without BossData
+        if (spriteRenderer != null)
+        {
+            var sprite = RuntimeAssetLoader.GetBossSprite("BronzeMask");
+            if (sprite != null)
+            {
+                spriteRenderer.sprite = sprite;
+                Debug.Log("[BossInitializer] Applied fallback sprite from RuntimeAssetLoader");
+            }
+            spriteRenderer.color = new Color(0.8f, 0.5f, 0.2f); // Bronze color
+        }
+        transform.localScale = new Vector3(2, 2, 1);
+        transform.position = new Vector3(3, 1, 0);
     }
 
     /// <summary>
@@ -75,6 +100,16 @@ public class BossInitializer : MonoBehaviour
             if (currentBoss.phases.Count > 0 && currentBoss.phases[0].phaseSprite != null)
             {
                 spriteRenderer.sprite = currentBoss.phases[0].phaseSprite;
+            }
+            else
+            {
+                // Fallback to runtime-generated sprite
+                var fallbackSprite = RuntimeAssetLoader.GetBossSprite(currentBoss.bossName);
+                if (fallbackSprite != null)
+                {
+                    spriteRenderer.sprite = fallbackSprite;
+                    Debug.Log($"[BossInitializer] Using runtime sprite for {currentBoss.bossName}");
+                }
             }
         }
 

@@ -12,6 +12,11 @@ public class RuntimeInitializer
     {
         Debug.Log("[RuntimeInitializer] Initializing game systems...");
 
+        // Force RuntimeAssetLoader to initialize sprites first
+        var hero = RuntimeAssetLoader.GetDefaultHero();
+        var boss = RuntimeAssetLoader.GetDefaultBoss();
+        Debug.Log($"[RuntimeInitializer] RuntimeAssetLoader ready - Hero: {(hero != null ? hero.heroName : "null")}, Boss: {(boss != null ? boss.bossName : "null")}");
+
         // Ensure AudioManager exists
         if (AudioManager.Instance == null)
         {
@@ -37,8 +42,21 @@ public class RuntimeInitializer
         var config = GameConfig.Instance;
         if (config == null)
         {
-            Debug.LogWarning("[RuntimeInitializer] GameConfig not found. Using default values.");
+            Debug.Log("[RuntimeInitializer] GameConfig not found - RuntimeAssetLoader will provide defaults.");
             return;
+        }
+
+        // Populate available lists from RuntimeAssetLoader if empty
+        if (config.availableHeroes.Count == 0)
+        {
+            config.availableHeroes = RuntimeAssetLoader.GetAllHeroes();
+            Debug.Log($"[RuntimeInitializer] Populated {config.availableHeroes.Count} heroes from RuntimeAssetLoader");
+        }
+
+        if (config.availableBosses.Count == 0)
+        {
+            config.availableBosses = RuntimeAssetLoader.GetAllBosses();
+            Debug.Log($"[RuntimeInitializer] Populated {config.availableBosses.Count} bosses from RuntimeAssetLoader");
         }
 
         if (config.selectedHero == null && config.availableHeroes.Count > 0)

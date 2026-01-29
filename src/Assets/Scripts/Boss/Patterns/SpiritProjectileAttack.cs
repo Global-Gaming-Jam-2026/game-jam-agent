@@ -165,8 +165,14 @@ public class SpiritProjectileAttack : BossAttackPattern
 
     private Sprite CreateCircleSprite()
     {
+        // Try to get better sprite from RuntimeAssetLoader
+        var sprite = RuntimeAssetLoader.GetEffectSprite("Projectile");
+        if (sprite != null) return sprite;
+
+        // Fallback to procedural generation
         int size = 32;
         Texture2D tex = new Texture2D(size, size);
+        tex.filterMode = FilterMode.Point;
         Color[] colors = new Color[size * size];
 
         Vector2 center = new Vector2(size / 2f, size / 2f);
@@ -179,9 +185,10 @@ public class SpiritProjectileAttack : BossAttackPattern
                 float dist = Vector2.Distance(new Vector2(x, y), center);
                 if (dist < radius)
                 {
-                    // Gradient from center
+                    // Gradient from center with glow
                     float alpha = 1f - (dist / radius) * 0.5f;
-                    colors[y * size + x] = new Color(1, 1, 1, alpha);
+                    float brightness = 1f - (dist / radius) * 0.3f;
+                    colors[y * size + x] = new Color(brightness, brightness, brightness, alpha);
                 }
                 else
                 {

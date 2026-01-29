@@ -39,13 +39,36 @@ public class HeroInitializer : MonoBehaviour
             currentHero = GameConfig.Instance.selectedHero;
         }
 
+        // Fallback to RuntimeAssetLoader if no data found
+        if (currentHero == null)
+        {
+            currentHero = RuntimeAssetLoader.GetDefaultHero();
+            Debug.Log("[HeroInitializer] Using RuntimeAssetLoader default hero");
+        }
+
         if (currentHero != null)
         {
             ApplyHeroData();
         }
         else
         {
-            Debug.Log("No HeroData found - using default values");
+            Debug.LogWarning("No HeroData found - applying fallback visuals");
+            ApplyFallbackVisuals();
+        }
+    }
+
+    private void ApplyFallbackVisuals()
+    {
+        // Apply runtime-generated sprite even without HeroData
+        if (spriteRenderer != null)
+        {
+            var sprite = RuntimeAssetLoader.GetHeroSprite("BronzeWarrior");
+            if (sprite != null)
+            {
+                spriteRenderer.sprite = sprite;
+                Debug.Log("[HeroInitializer] Applied fallback sprite from RuntimeAssetLoader");
+            }
+            spriteRenderer.color = new Color(0.8f, 0.5f, 0.2f); // Bronze color
         }
     }
 
@@ -73,6 +96,16 @@ public class HeroInitializer : MonoBehaviour
             if (currentHero.idleSprite != null)
             {
                 spriteRenderer.sprite = currentHero.idleSprite;
+            }
+            else
+            {
+                // Fallback to runtime-generated sprite
+                var fallbackSprite = RuntimeAssetLoader.GetHeroSprite(currentHero.heroName);
+                if (fallbackSprite != null)
+                {
+                    spriteRenderer.sprite = fallbackSprite;
+                    Debug.Log($"[HeroInitializer] Using runtime sprite for {currentHero.heroName}");
+                }
             }
             spriteRenderer.color = currentHero.primaryColor;
         }
