@@ -3,13 +3,19 @@ using UnityEngine;
 using UnityEditor;
 using UnityEngine.SceneManagement;
 using UnityEditor.SceneManagement;
+using System.Collections.Generic;
 
 /// <summary>
 /// One-click setup wizard for Mask of the Bronze God
-/// Creates all necessary GameObjects, layers, tags, and configures the scene
+/// Creates all necessary GameObjects, layers, tags, data assets, and configures the scene
+/// Now supports multiple heroes, bosses, and themes
 /// </summary>
 public class GameSetupWizard : EditorWindow
 {
+    private int selectedHeroIndex = 0;
+    private int selectedBossIndex = 0;
+    private int selectedThemeIndex = 0;
+
     [MenuItem("Game Jam/Setup Wizard")]
     public static void ShowWindow()
     {
@@ -21,6 +27,7 @@ public class GameSetupWizard : EditorWindow
         GUILayout.Label("Mask of the Bronze God - Setup", EditorStyles.boldLabel);
         GUILayout.Space(10);
 
+        // STEP 1: Layers & Tags
         GUILayout.Label("Step 1: Create Layers & Tags", EditorStyles.label);
         if (GUILayout.Button("Setup Layers & Tags"))
         {
@@ -29,7 +36,22 @@ public class GameSetupWizard : EditorWindow
 
         GUILayout.Space(10);
 
-        GUILayout.Label("Step 2: Setup Game Scene", EditorStyles.label);
+        // STEP 2: Data Assets (NEW)
+        GUILayout.Label("Step 2: Create Data Assets", EditorStyles.label);
+        EditorGUILayout.HelpBox(
+            "Creates default Heroes, Bosses, Themes, and GameConfig.\n" +
+            "You can modify these in Assets/Data/ after creation.",
+            MessageType.Info);
+
+        if (GUILayout.Button("Create Default Data Assets"))
+        {
+            CreateDefaultDataAssets();
+        }
+
+        GUILayout.Space(10);
+
+        // STEP 3: Game Scene
+        GUILayout.Label("Step 3: Setup Game Scene", EditorStyles.label);
         if (GUILayout.Button("Create Game Scene"))
         {
             CreateGameScene();
@@ -37,7 +59,8 @@ public class GameSetupWizard : EditorWindow
 
         GUILayout.Space(10);
 
-        GUILayout.Label("Step 3: Setup Main Menu", EditorStyles.label);
+        // STEP 4: Main Menu
+        GUILayout.Label("Step 4: Setup Main Menu", EditorStyles.label);
         if (GUILayout.Button("Create Main Menu Scene"))
         {
             CreateMainMenuScene();
@@ -45,7 +68,10 @@ public class GameSetupWizard : EditorWindow
 
         GUILayout.Space(20);
 
+        // Quick Actions
         GUILayout.Label("Quick Actions", EditorStyles.boldLabel);
+
+        EditorGUILayout.BeginHorizontal();
         if (GUILayout.Button("Create Player Prefab"))
         {
             CreatePlayerPrefab();
@@ -54,17 +80,31 @@ public class GameSetupWizard : EditorWindow
         {
             CreateBossPrefab();
         }
+        EditorGUILayout.EndHorizontal();
+
+        GUILayout.Space(10);
+
+        if (GUILayout.Button("Create Additional Hero Data"))
+        {
+            CreateHeroDataAsset();
+        }
+        if (GUILayout.Button("Create Additional Boss Data"))
+        {
+            CreateBossDataAsset();
+        }
 
         GUILayout.Space(20);
 
         EditorGUILayout.HelpBox(
             "After setup:\n" +
-            "1. Create/import sprites\n" +
-            "2. Assign sprites to Player and Boss\n" +
+            "1. Modify Data Assets in Assets/Data/\n" +
+            "2. Create/import sprites\n" +
             "3. Add scenes to Build Settings\n" +
             "4. Press Play to test!",
             MessageType.Info);
     }
+
+    #region Layers and Tags
 
     private void SetupLayersAndTags()
     {
@@ -72,6 +112,7 @@ public class GameSetupWizard : EditorWindow
         CreateTag("Player");
         CreateTag("Boss");
         CreateTag("PlayerAttack");
+        CreateTag("Parryable");
 
         // Create Layers
         CreateLayer(6, "Player");
@@ -88,14 +129,12 @@ public class GameSetupWizard : EditorWindow
         SerializedObject tagManager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
         SerializedProperty tagsProp = tagManager.FindProperty("tags");
 
-        // Check if tag exists
         for (int i = 0; i < tagsProp.arraySize; i++)
         {
             if (tagsProp.GetArrayElementAtIndex(i).stringValue == tagName)
                 return;
         }
 
-        // Add new tag
         tagsProp.InsertArrayElementAtIndex(tagsProp.arraySize);
         tagsProp.GetArrayElementAtIndex(tagsProp.arraySize - 1).stringValue = tagName;
         tagManager.ApplyModifiedProperties();
@@ -113,16 +152,253 @@ public class GameSetupWizard : EditorWindow
         }
     }
 
+    #endregion
+
+    #region Data Assets
+
+    private void CreateDefaultDataAssets()
+    {
+        EnsureDirectoryExists("Assets/Data");
+        EnsureDirectoryExists("Assets/Data/Heroes");
+        EnsureDirectoryExists("Assets/Data/Bosses");
+        EnsureDirectoryExists("Assets/Data/Themes");
+        EnsureDirectoryExists("Assets/Resources");
+
+        // Create default heroes
+        var hero1 = CreateHeroData("Bronze Warrior", new Color(0.8f, 0.5f, 0.2f), "Assets/Data/Heroes/Hero_BronzeWarrior.asset");
+        var hero2 = CreateHeroData("Shadow Dancer", new Color(0.3f, 0.2f, 0.4f), "Assets/Data/Heroes/Hero_ShadowDancer.asset");
+        var hero3 = CreateHeroData("Flame Bearer", new Color(0.9f, 0.3f, 0.1f), "Assets/Data/Heroes/Hero_FlameBearer.asset");
+
+        // Create default bosses
+        var boss1 = CreateBossData("The Bronze Mask", new Color(0.8f, 0.5f, 0.2f), "Assets/Data/Bosses/Boss_BronzeMask.asset");
+        var boss2 = CreateBossData("Chaos Totem", new Color(0.5f, 0.2f, 0.3f), "Assets/Data/Bosses/Boss_ChaosTotem.asset");
+
+        // Create default themes
+        var theme1 = CreateThemeData("Bronze Era", new Color(0.24f, 0.16f, 0.08f), "Assets/Data/Themes/Theme_BronzeEra.asset");
+        var theme2 = CreateThemeData("Chaos Realm", new Color(0.15f, 0.08f, 0.12f), "Assets/Data/Themes/Theme_ChaosRealm.asset");
+
+        // Create GameConfig
+        var config = ScriptableObject.CreateInstance<GameConfig>();
+        config.selectedHero = hero1;
+        config.selectedBoss = boss1;
+        config.selectedTheme = theme1;
+        config.availableHeroes = new List<HeroData> { hero1, hero2, hero3 };
+        config.availableBosses = new List<BossData> { boss1, boss2 };
+        config.availableThemes = new List<ThemeData> { theme1, theme2 };
+
+        AssetDatabase.CreateAsset(config, "Assets/Resources/GameConfig.asset");
+
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        Debug.Log("Default data assets created!");
+        EditorUtility.DisplayDialog("Data Assets Created",
+            "Created:\n" +
+            "- 3 Heroes (Bronze Warrior, Shadow Dancer, Flame Bearer)\n" +
+            "- 2 Bosses (Bronze Mask, Chaos Totem)\n" +
+            "- 2 Themes (Bronze Era, Chaos Realm)\n" +
+            "- 1 GameConfig\n\n" +
+            "Find them in Assets/Data/",
+            "OK");
+    }
+
+    private HeroData CreateHeroData(string name, Color primaryColor, string path)
+    {
+        if (AssetDatabase.LoadAssetAtPath<HeroData>(path) != null)
+        {
+            return AssetDatabase.LoadAssetAtPath<HeroData>(path);
+        }
+
+        var hero = ScriptableObject.CreateInstance<HeroData>();
+        hero.heroName = name;
+        hero.primaryColor = primaryColor;
+        hero.secondaryColor = primaryColor * 0.7f;
+        hero.attackColor = new Color(primaryColor.r + 0.2f, primaryColor.g + 0.2f, primaryColor.b, 1f);
+
+        // Set varied stats based on hero type
+        switch (name)
+        {
+            case "Shadow Dancer":
+                hero.description = "Fast and evasive, with quick attacks.";
+                hero.moveSpeed = 8f;
+                hero.dodgeSpeed = 15f;
+                hero.attackDamage = 20f;
+                hero.maxHealth = 80f;
+                hero.specialAbility = HeroAbilityType.QuickDash;
+                break;
+            case "Flame Bearer":
+                hero.description = "Slow but powerful, deals heavy damage.";
+                hero.moveSpeed = 5f;
+                hero.dodgeSpeed = 10f;
+                hero.attackDamage = 35f;
+                hero.maxHealth = 120f;
+                hero.specialAbility = HeroAbilityType.HeavyHitter;
+                break;
+            default: // Bronze Warrior
+                hero.description = "A balanced fighter with quick attacks.";
+                hero.moveSpeed = 6f;
+                hero.dodgeSpeed = 12f;
+                hero.attackDamage = 25f;
+                hero.maxHealth = 100f;
+                hero.specialAbility = HeroAbilityType.None;
+                break;
+        }
+
+        AssetDatabase.CreateAsset(hero, path);
+        return hero;
+    }
+
+    private BossData CreateBossData(string name, Color primaryColor, string path)
+    {
+        if (AssetDatabase.LoadAssetAtPath<BossData>(path) != null)
+        {
+            return AssetDatabase.LoadAssetAtPath<BossData>(path);
+        }
+
+        var boss = ScriptableObject.CreateInstance<BossData>();
+        boss.bossName = name;
+        boss.primaryColor = primaryColor;
+        boss.secondaryColor = primaryColor * 0.6f;
+        boss.attackColor = new Color(1f, 0.4f, 0.2f);
+        boss.eyeColor = new Color(1f, 0.9f, 0.5f);
+
+        // Phase 1 config
+        var phase1 = new BossPhaseConfig
+        {
+            phaseName = "Phase 1",
+            healthPercentStart = 1f,
+            healthPercentEnd = 0.5f,
+            attackCooldown = 1.5f,
+            patternSpeedMultiplier = 1f,
+            useSweepAttack = true,
+            useSlamAttack = true,
+            useBulletPattern = false,
+            useLaserBeam = false,
+            useMinionSpawn = false,
+            useSpiritProjectiles = false
+        };
+
+        // Phase 2 config (harder)
+        var phase2 = new BossPhaseConfig
+        {
+            phaseName = "Phase 2",
+            healthPercentStart = 0.5f,
+            healthPercentEnd = 0f,
+            attackCooldown = 1.0f,
+            patternSpeedMultiplier = 1.3f,
+            phaseTint = new Color(0.9f, 0.3f, 0.3f),
+            useSweepAttack = true,
+            useSlamAttack = true,
+            useBulletPattern = true,
+            useLaserBeam = true,
+            useMinionSpawn = true,
+            useSpiritProjectiles = true
+        };
+
+        boss.phases = new List<BossPhaseConfig> { phase1, phase2 };
+
+        if (name == "Chaos Totem")
+        {
+            boss.description = "A corrupted totem of chaos, unpredictable and deadly.";
+            boss.maxHealth = 600f;
+            boss.phase2TintColor = new Color(0.8f, 0.1f, 0.5f);
+        }
+        else
+        {
+            boss.description = "An ancient totemic guardian awakened by chaos.";
+            boss.maxHealth = 500f;
+        }
+
+        AssetDatabase.CreateAsset(boss, path);
+        return boss;
+    }
+
+    private ThemeData CreateThemeData(string name, Color backgroundColor, string path)
+    {
+        if (AssetDatabase.LoadAssetAtPath<ThemeData>(path) != null)
+        {
+            return AssetDatabase.LoadAssetAtPath<ThemeData>(path);
+        }
+
+        var theme = ScriptableObject.CreateInstance<ThemeData>();
+        theme.themeName = name;
+        theme.backgroundColor = backgroundColor;
+        theme.arenaFloorColor = backgroundColor * 1.3f;
+        theme.arenaWallColor = backgroundColor * 0.8f;
+
+        if (name == "Chaos Realm")
+        {
+            theme.description = "Dark purple chaos dimension.";
+            theme.uiPrimaryColor = new Color(0.6f, 0.2f, 0.4f);
+            theme.uiAccentColor = new Color(1f, 0.3f, 0.6f);
+            theme.parryableBulletColor = new Color(1f, 0.4f, 0.8f);
+        }
+        else // Bronze Era
+        {
+            theme.description = "Ancient bronze and earth tones.";
+            theme.uiPrimaryColor = new Color(0.8f, 0.5f, 0.2f);
+            theme.uiAccentColor = new Color(1f, 0.8f, 0.3f);
+        }
+
+        AssetDatabase.CreateAsset(theme, path);
+        return theme;
+    }
+
+    private void CreateHeroDataAsset()
+    {
+        EnsureDirectoryExists("Assets/Data/Heroes");
+        string path = EditorUtility.SaveFilePanelInProject(
+            "Create Hero Data",
+            "NewHero",
+            "asset",
+            "Choose location for new Hero Data",
+            "Assets/Data/Heroes");
+
+        if (!string.IsNullOrEmpty(path))
+        {
+            var hero = ScriptableObject.CreateInstance<HeroData>();
+            hero.heroName = "New Hero";
+            AssetDatabase.CreateAsset(hero, path);
+            AssetDatabase.SaveAssets();
+            Selection.activeObject = hero;
+            EditorGUIUtility.PingObject(hero);
+        }
+    }
+
+    private void CreateBossDataAsset()
+    {
+        EnsureDirectoryExists("Assets/Data/Bosses");
+        string path = EditorUtility.SaveFilePanelInProject(
+            "Create Boss Data",
+            "NewBoss",
+            "asset",
+            "Choose location for new Boss Data",
+            "Assets/Data/Bosses");
+
+        if (!string.IsNullOrEmpty(path))
+        {
+            var boss = ScriptableObject.CreateInstance<BossData>();
+            boss.bossName = "New Boss";
+            AssetDatabase.CreateAsset(boss, path);
+            AssetDatabase.SaveAssets();
+            Selection.activeObject = boss;
+            EditorGUIUtility.PingObject(boss);
+        }
+    }
+
+    #endregion
+
+    #region Scene Creation
+
     private void CreateGameScene()
     {
-        // Create new scene
         Scene newScene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
         // Setup Camera
         Camera mainCam = Camera.main;
         if (mainCam != null)
         {
-            mainCam.backgroundColor = new Color(0.24f, 0.16f, 0.08f); // Dark Bronze #3D2914
+            mainCam.backgroundColor = new Color(0.24f, 0.16f, 0.08f);
             mainCam.orthographic = true;
             mainCam.orthographicSize = 5;
             mainCam.gameObject.AddComponent<CameraShake>();
@@ -186,6 +462,10 @@ public class GameSetupWizard : EditorWindow
         Debug.Log("Main Menu scene created at: " + scenePath);
     }
 
+    #endregion
+
+    #region Object Creation
+
     private GameObject CreatePlayerObject()
     {
         GameObject player = new GameObject("Player");
@@ -207,6 +487,7 @@ public class GameSetupWizard : EditorWindow
         player.AddComponent<PlayerCombat>();
         player.AddComponent<PlayerHealth>();
         player.AddComponent<PlayerParry>();
+        player.AddComponent<HeroInitializer>(); // NEW: For hero data
 
         // Create attack point child
         GameObject attackPoint = new GameObject("AttackPoint");
@@ -246,11 +527,15 @@ public class GameSetupWizard : EditorWindow
 
         boss.AddComponent<BossControllerMultiPhase>();
         boss.AddComponent<BossHealth>();
+        boss.AddComponent<BossInitializer>(); // NEW: For boss data
 
-        // Add attack patterns
+        // Add all attack patterns (BossInitializer will enable/disable based on BossData)
         boss.AddComponent<SweepAttack>();
         boss.AddComponent<SlamAttack>();
         boss.AddComponent<BulletCirclePattern>();
+        boss.AddComponent<LaserBeamPattern>();
+        boss.AddComponent<MinionSpawnPattern>();
+        boss.AddComponent<SpiritProjectileAttack>();
 
         boss.transform.position = new Vector3(3, 1, 0);
         boss.transform.localScale = new Vector3(2, 2, 1);
@@ -355,6 +640,10 @@ public class GameSetupWizard : EditorWindow
         Debug.Log("Boss prefab created!");
     }
 
+    #endregion
+
+    #region Utilities
+
     private void EnsureDirectoryExists(string path)
     {
         if (!AssetDatabase.IsValidFolder(path))
@@ -372,5 +661,7 @@ public class GameSetupWizard : EditorWindow
             }
         }
     }
+
+    #endregion
 }
 #endif

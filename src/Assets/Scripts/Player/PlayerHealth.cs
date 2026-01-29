@@ -174,4 +174,34 @@ public class PlayerHealth : MonoBehaviour
             combat.enabled = true;
         }
     }
+
+    /// <summary>
+    /// Set max health (for hero initialization)
+    /// </summary>
+    public void SetMaxHealth(float newMaxHealth)
+    {
+        maxHealth = newMaxHealth;
+        currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(HealthPercent);
+    }
+
+    /// <summary>
+    /// Set damage flash color (for hero customization)
+    /// </summary>
+    public void SetDamageFlashColor(Color color)
+    {
+        damageFlashColor = color;
+    }
+
+    /// <summary>
+    /// Set original color (for hero customization)
+    /// </summary>
+    public void SetOriginalColor(Color color)
+    {
+        originalColor = color;
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = color;
+        }
+    }
 }

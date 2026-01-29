@@ -375,6 +375,34 @@ public class BossControllerMultiPhase : MonoBehaviour
         phases = phaseList;
     }
 
+    /// <summary>
+    /// Set phases and reinitialize (for BossInitializer)
+    /// </summary>
+    public void SetPhases(List<BossPhaseData> phaseList)
+    {
+        phases = phaseList;
+
+        // Initialize all patterns in all phases
+        foreach (var phase in phases)
+        {
+            if (phase.patterns != null)
+            {
+                foreach (var pattern in phase.patterns)
+                {
+                    if (pattern != null) pattern.Initialize(this);
+                }
+            }
+        }
+
+        // Set first phase if available
+        if (phases.Count > 0)
+        {
+            currentPhase = phases[0];
+            currentPhaseIndex = 0;
+            ApplyPhaseVisuals(currentPhase);
+        }
+    }
+
     private void OnDestroy()
     {
         if (bossHealth != null)

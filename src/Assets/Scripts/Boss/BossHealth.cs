@@ -133,4 +133,34 @@ public class BossHealth : MonoBehaviour
         staggerDamageAccumulated = 0;
         OnHealthChanged?.Invoke(HealthPercent);
     }
+
+    /// <summary>
+    /// Set max health (for boss initialization)
+    /// </summary>
+    public void SetMaxHealth(float newMaxHealth)
+    {
+        maxHealth = newMaxHealth;
+        currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(HealthPercent);
+    }
+
+    /// <summary>
+    /// Set stagger threshold (for boss initialization)
+    /// </summary>
+    public void SetStaggerThreshold(float threshold)
+    {
+        staggerThreshold = threshold;
+    }
+
+    /// <summary>
+    /// Set original color (for boss customization)
+    /// </summary>
+    public void SetOriginalColor(Color color)
+    {
+        originalColor = color;
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = color;
+        }
+    }
 }
