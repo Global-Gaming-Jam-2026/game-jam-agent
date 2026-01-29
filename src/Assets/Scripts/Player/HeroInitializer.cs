@@ -93,19 +93,24 @@ public class HeroInitializer : MonoBehaviour
         // Health
         if (playerHealth != null)
         {
-            // Use SetMaxHealth if available, otherwise we need to set via serialized field
-            // For now, we'll use a public method approach
             playerHealth.SetMaxHealth(currentHero.maxHealth);
+            playerHealth.SetDamageFlashColor(currentHero.damageFlashColor);
         }
 
-        // Note: PlayerController, PlayerCombat use [SerializeField] fields
-        // We can either:
-        // 1. Make them public/add setters
-        // 2. Use reflection (not recommended for games)
-        // 3. Add initialization methods
-        // For now, log the values - the actual application requires small script changes
+        // Movement speed
+        if (playerController != null)
+        {
+            playerController.SetMoveSpeed(currentHero.moveSpeed);
+            playerController.SetDodgeParams(currentHero.dodgeSpeed, currentHero.dodgeDuration);
+        }
 
-        Debug.Log($"Hero Stats - HP: {currentHero.maxHealth}, Speed: {currentHero.moveSpeed}, Damage: {currentHero.attackDamage}");
+        // Attack damage
+        if (playerCombat != null)
+        {
+            playerCombat.SetAttackDamage(currentHero.attackDamage);
+        }
+
+        Debug.Log($"Hero Stats Applied - HP: {currentHero.maxHealth}, Speed: {currentHero.moveSpeed}, Damage: {currentHero.attackDamage}");
     }
 
     /// <summary>

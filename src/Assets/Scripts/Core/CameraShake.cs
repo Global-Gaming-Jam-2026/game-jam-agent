@@ -27,6 +27,7 @@ public class CameraShake : MonoBehaviour
     public void Shake(float intensity, float duration)
     {
         // Check if screen shake is enabled in settings
+        // SettingsUI.ScreenShakeEnabled defaults to true, so this is safe even if SettingsUI hasn't loaded
         if (!SettingsUI.ScreenShakeEnabled) return;
 
         if (shakeCoroutine != null)

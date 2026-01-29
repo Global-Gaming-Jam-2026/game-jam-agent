@@ -224,28 +224,41 @@ public class PlayerCombat : MonoBehaviour
 
     private void TriggerHitFeedback()
     {
-        // Screen shake
-        if (CameraShake.Instance != null)
+        // Use centralized HitFeedback system for hitstop + screen shake
+        if (HitFeedback.Instance != null)
         {
-            CameraShake.Instance.ShakeLight();
+            HitFeedback.Instance.PlayerHitEnemy();
         }
-
-        // Hitstop
-        StartCoroutine(HitstopCoroutine());
-    }
-
-    private System.Collections.IEnumerator HitstopCoroutine()
-    {
-        float originalTimeScale = Time.timeScale;
-        Time.timeScale = 0.05f;
-        yield return new WaitForSecondsRealtime(0.05f); // ~3-5 frames at 60fps
-        Time.timeScale = originalTimeScale;
+        else
+        {
+            // Fallback if HitFeedback not in scene
+            if (CameraShake.Instance != null)
+            {
+                CameraShake.Instance.ShakeLight();
+            }
+        }
     }
 
     private void EndAttack()
     {
         isAttacking = false;
         comboResetTimer = comboResetTime;
+    }
+
+    /// <summary>
+    /// Set attack damage at runtime (for HeroInitializer)
+    /// </summary>
+    public void SetAttackDamage(float damage)
+    {
+        attackDamage = damage;
+    }
+
+    /// <summary>
+    /// Set combo settings at runtime
+    /// </summary>
+    public void SetComboSettings(int maxCombo)
+    {
+        maxComboCount = maxCombo;
     }
 
     // Debug visualization

@@ -246,4 +246,21 @@ public class PlayerController : MonoBehaviour
         currentSpeed = 0;
         rb.linearVelocity = Vector2.zero;
     }
+
+    /// <summary>
+    /// Set movement speed at runtime (for HeroInitializer)
+    /// </summary>
+    public void SetMoveSpeed(float speed)
+    {
+        moveSpeed = speed;
+    }
+
+    /// <summary>
+    /// Set dodge parameters at runtime
+    /// </summary>
+    public void SetDodgeParams(float speed, float duration)
+    {
+        dodgeSpeed = speed;
+        dodgeDuration = duration;
+    }
 }

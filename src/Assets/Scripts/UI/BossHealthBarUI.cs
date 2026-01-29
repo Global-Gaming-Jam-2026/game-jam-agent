@@ -8,7 +8,7 @@ public class BossHealthBarUI : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private BossHealth bossHealth;
-    [SerializeField] private BossController bossController;
+    [SerializeField] private BossControllerMultiPhase bossController;
     [SerializeField] private Image healthFill;
     [SerializeField] private Image damageFill;
     [SerializeField] private Text bossNameText;
@@ -41,7 +41,7 @@ public class BossHealthBarUI : MonoBehaviour
             if (boss != null)
             {
                 bossHealth = boss.GetComponent<BossHealth>();
-                bossController = boss.GetComponent<BossController>();
+                bossController = boss.GetComponent<BossControllerMultiPhase>();
             }
         }
 
@@ -54,7 +54,7 @@ public class BossHealthBarUI : MonoBehaviour
 
         if (bossController != null)
         {
-            bossController.OnPhaseChanged += OnPhaseChanged;
+            bossController.OnPhaseChanged += OnPhaseChangedHandler;
         }
 
         // Set boss name
@@ -110,8 +110,14 @@ public class BossHealthBarUI : MonoBehaviour
         targetFill = healthPercent;
     }
 
-    private void OnPhaseChanged(int phase)
+    private void OnPhaseChangedHandler(int phase, BossPhaseData phaseData)
     {
+        // Update boss name from phase data if available
+        if (bossNameText != null && phaseData != null && !string.IsNullOrEmpty(phaseData.phaseName))
+        {
+            bossNameText.text = phaseData.phaseName;
+        }
+
         if (phase >= 2)
         {
             // Show phase indicator
@@ -173,7 +179,7 @@ public class BossHealthBarUI : MonoBehaviour
 
         if (bossController != null)
         {
-            bossController.OnPhaseChanged -= OnPhaseChanged;
+            bossController.OnPhaseChanged -= OnPhaseChangedHandler;
         }
     }
 }

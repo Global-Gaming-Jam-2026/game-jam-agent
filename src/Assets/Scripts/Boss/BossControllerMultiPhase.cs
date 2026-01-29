@@ -380,11 +380,12 @@ public class BossControllerMultiPhase : MonoBehaviour
     /// </summary>
     public void SetPhases(List<BossPhaseData> phaseList)
     {
-        phases = phaseList;
+        phases = phaseList ?? new List<BossPhaseData>();
 
         // Initialize all patterns in all phases
         foreach (var phase in phases)
         {
+            if (phase == null) continue;
             if (phase.patterns != null)
             {
                 foreach (var pattern in phase.patterns)
@@ -395,11 +396,17 @@ public class BossControllerMultiPhase : MonoBehaviour
         }
 
         // Set first phase if available
-        if (phases.Count > 0)
+        if (phases.Count > 0 && phases[0] != null)
         {
             currentPhase = phases[0];
             currentPhaseIndex = 0;
             ApplyPhaseVisuals(currentPhase);
+        }
+        else
+        {
+            currentPhase = null;
+            currentPhaseIndex = 0;
+            Debug.LogWarning("BossControllerMultiPhase: No valid phases set");
         }
     }
 
