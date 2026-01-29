@@ -18,7 +18,7 @@ public abstract class BossAttackPattern : MonoBehaviour
     [SerializeField] protected AudioClip telegraphSound;
     [SerializeField] protected AudioClip attackSound;
 
-    protected BossController boss;
+    protected BossControllerMultiPhase boss;
     protected Transform player;
     protected bool isCancelled;
 
@@ -26,7 +26,7 @@ public abstract class BossAttackPattern : MonoBehaviour
     public float SelectionWeight => selectionWeight;
     public int MinPhaseRequired => minPhaseRequired;
 
-    public virtual void Initialize(BossController bossController)
+    public virtual void Initialize(BossControllerMultiPhase bossController)
     {
         boss = bossController;
         player = boss.Player;
