@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "gamedev": {
+      "command": "python",
+      "args": ["mcp/gamedev_server.py"],
+      "cwd": "."
+    }
+  }
+}
