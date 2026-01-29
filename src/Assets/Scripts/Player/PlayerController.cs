@@ -1,4 +1,7 @@
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
@@ -17,6 +20,9 @@ public class PlayerController : MonoBehaviour
     [Header("Input Buffer")]
     [SerializeField] private float inputBufferTime = 0.15f;
 
+    [Header("Debug")]
+    [SerializeField] private bool enableDebugLogs = true;
+
     // Components
     private Rigidbody2D rb;
     private SpriteRenderer spriteRenderer;
@@ -30,13 +36,16 @@ public class PlayerController : MonoBehaviour
     private float dodgeTimer;
     private float dodgeCooldownTimer;
     private float iFrameTimer;
-    private int facingDirection = 1; // 1 = right, -1 = left
+    private int facingDirection = 1;
 
     // Input buffering
     private float dodgeBufferTimer;
     private bool dodgeBuffered;
 
-    // Animation hashes (for performance)
+    // Debug
+    private float debugLogTimer;
+
+    // Animation hashes
     private static readonly int AnimSpeed = Animator.StringToHash("Speed");
     private static readonly int AnimDodge = Animator.StringToHash("Dodge");
 
@@ -53,8 +62,26 @@ public class PlayerController : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         animator = GetComponent<Animator>();
 
-        // Ensure kinematic for direct control
-        rb.bodyType = RigidbodyType2D.Kinematic;
+        // Use Dynamic with no gravity for reliable movement in Unity 6
+        rb.bodyType = RigidbodyType2D.Dynamic;
+        rb.gravityScale = 0;
+        rb.freezeRotation = true;
+        rb.constraints = RigidbodyConstraints2D.FreezeRotation;
+
+        if (enableDebugLogs)
+        {
+            Debug.Log($"[PlayerController] Awake - RB Type: {rb.bodyType}, Gravity: {rb.gravityScale}, Simulated: {rb.simulated}");
+        }
+    }
+
+    private void Start()
+    {
+        if (enableDebugLogs)
+        {
+            Debug.Log($"[PlayerController] Start - Position: {transform.position}, MoveSpeed: {moveSpeed}");
+            string gameState = GameManager.Instance != null ? GameManager.Instance.CurrentState.ToString() : "NO GAMEMANAGER";
+            Debug.Log($"[PlayerController] GameManager State: {gameState}");
+        }
     }
 
     private void Update()
@@ -79,22 +106,29 @@ public class PlayerController : MonoBehaviour
 
         if (isDodging)
         {
-            // During dodge, move in dodge direction
-            rb.linearVelocity = new Vector2(facingDirection * dodgeSpeed, 0);
+            // During dodge - direct transform movement
+            transform.position += new Vector3(facingDirection * dodgeSpeed * Time.fixedDeltaTime, 0, 0);
         }
         else
         {
-            // Normal movement
             ApplyMovement();
         }
     }
 
     private void HandleInput()
     {
-        // Get horizontal input
-        horizontalInput = Input.GetAxisRaw("Horizontal");
+        horizontalInput = GetHorizontalInput();
 
-        // Update facing direction based on input (but not during dodge)
+        if (enableDebugLogs)
+        {
+            debugLogTimer -= Time.deltaTime;
+            if (debugLogTimer <= 0 && Mathf.Abs(horizontalInput) > 0.01f)
+            {
+                Debug.Log($"[PlayerController] Input: {horizontalInput:F2}, CurrentSpeed: {currentSpeed:F2}, Position: {transform.position}");
+                debugLogTimer = 0.5f;
+            }
+        }
+
         if (!isDodging && horizontalInput != 0)
         {
             facingDirection = horizontalInput > 0 ? 1 : -1;
@@ -104,8 +138,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Dodge input (with buffering)
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (GetDodgeInput())
         {
             if (CanDodge())
             {
@@ -113,7 +146,6 @@ public class PlayerController : MonoBehaviour
             }
             else
             {
-                // Buffer the dodge input
                 dodgeBuffered = true;
                 dodgeBufferTimer = inputBufferTime;
             }
@@ -122,46 +154,33 @@ public class PlayerController : MonoBehaviour
 
     private void UpdateTimers()
     {
-        // Dodge cooldown
         if (dodgeCooldownTimer > 0)
-        {
             dodgeCooldownTimer -= Time.deltaTime;
-        }
 
-        // Dodge duration
         if (isDodging)
         {
             dodgeTimer -= Time.deltaTime;
             if (dodgeTimer <= 0)
-            {
                 EndDodge();
-            }
         }
 
-        // I-frames
         if (isInvulnerable && !isDodging)
         {
             iFrameTimer -= Time.deltaTime;
             if (iFrameTimer <= 0)
-            {
                 isInvulnerable = false;
-            }
         }
 
-        // Input buffer decay
         if (dodgeBuffered)
         {
             dodgeBufferTimer -= Time.deltaTime;
             if (dodgeBufferTimer <= 0)
-            {
                 dodgeBuffered = false;
-            }
         }
     }
 
     private void ProcessBufferedInput()
     {
-        // Process buffered dodge
         if (dodgeBuffered && CanDodge())
         {
             dodgeBuffered = false;
@@ -173,29 +192,19 @@ public class PlayerController : MonoBehaviour
     {
         float targetSpeed = horizontalInput * moveSpeed;
 
-        // Smooth acceleration/deceleration
         if (Mathf.Abs(horizontalInput) > 0.1f)
-        {
             currentSpeed = Mathf.MoveTowards(currentSpeed, targetSpeed, acceleration * Time.fixedDeltaTime);
-        }
         else
-        {
             currentSpeed = Mathf.MoveTowards(currentSpeed, 0, deceleration * Time.fixedDeltaTime);
-        }
 
-        rb.linearVelocity = new Vector2(currentSpeed, rb.linearVelocity.y);
+        // Direct transform movement - more reliable in Unity 6
+        transform.position += new Vector3(currentSpeed * Time.fixedDeltaTime, 0, 0);
 
-        // Update animator
         if (animator != null)
-        {
             animator.SetFloat(AnimSpeed, Mathf.Abs(currentSpeed));
-        }
     }
 
-    private bool CanDodge()
-    {
-        return !isDodging && dodgeCooldownTimer <= 0;
-    }
+    private bool CanDodge() => !isDodging && dodgeCooldownTimer <= 0;
 
     private void StartDodge()
     {
@@ -204,11 +213,8 @@ public class PlayerController : MonoBehaviour
         dodgeTimer = dodgeDuration;
         dodgeCooldownTimer = dodgeCooldown;
 
-        // Trigger animation
         if (animator != null)
-        {
             animator.SetTrigger(AnimDodge);
-        }
 
         OnDodgeStart?.Invoke();
     }
@@ -216,51 +222,80 @@ public class PlayerController : MonoBehaviour
     private void EndDodge()
     {
         isDodging = false;
-        // Keep i-frames for a bit after dodge ends
         iFrameTimer = iFrameDuration - dodgeDuration;
         if (iFrameTimer <= 0)
-        {
             isInvulnerable = false;
-        }
 
-        // Reset velocity
         currentSpeed = facingDirection * moveSpeed * 0.5f;
-
         OnDodgeEnd?.Invoke();
     }
 
-    /// <summary>
-    /// Grant invulnerability frames (called when taking damage)
-    /// </summary>
     public void GrantIFrames(float duration)
     {
         isInvulnerable = true;
         iFrameTimer = duration;
     }
 
-    /// <summary>
-    /// Force stop movement (for hit stun, etc.)
-    /// </summary>
     public void StopMovement()
     {
         currentSpeed = 0;
         rb.linearVelocity = Vector2.zero;
     }
 
-    /// <summary>
-    /// Set movement speed at runtime (for HeroInitializer)
-    /// </summary>
-    public void SetMoveSpeed(float speed)
-    {
-        moveSpeed = speed;
-    }
-
-    /// <summary>
-    /// Set dodge parameters at runtime
-    /// </summary>
+    public void SetMoveSpeed(float speed) => moveSpeed = speed;
     public void SetDodgeParams(float speed, float duration)
     {
         dodgeSpeed = speed;
         dodgeDuration = duration;
+    }
+
+    /// <summary>
+    /// Get horizontal input - supports both old and new Input Systems
+    /// </summary>
+    private float GetHorizontalInput()
+    {
+        float input = 0f;
+
+        // Try legacy Input System first
+        try { input = Input.GetAxisRaw("Horizontal"); }
+        catch { /* Legacy input not available */ }
+
+        // Fallback to direct key detection
+        if (Mathf.Abs(input) < 0.01f)
+        {
+            if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+                input = 1f;
+            else if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+                input = -1f;
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        // Try new Input System if available
+        if (Mathf.Abs(input) < 0.01f && Keyboard.current != null)
+        {
+            if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed)
+                input = 1f;
+            else if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed)
+                input = -1f;
+        }
+#endif
+
+        return input;
+    }
+
+    /// <summary>
+    /// Check if dodge key was pressed - supports both input systems
+    /// </summary>
+    private bool GetDodgeInput()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+            return true;
+
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame)
+            return true;
+#endif
+
+        return false;
     }
 }
