@@ -26,6 +26,9 @@ public class CameraShake : MonoBehaviour
     /// <param name="duration">How long to shake in seconds</param>
     public void Shake(float intensity, float duration)
     {
+        // Check if screen shake is enabled in settings
+        if (!SettingsUI.ScreenShakeEnabled) return;
+
         if (shakeCoroutine != null)
         {
             StopCoroutine(shakeCoroutine);
