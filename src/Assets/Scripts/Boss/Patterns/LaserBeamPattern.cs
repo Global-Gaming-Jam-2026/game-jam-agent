@@ -19,9 +19,13 @@ public class LaserBeamPattern : BossAttackPattern
     [SerializeField] private Color laserColor = new Color(1f, 0.3f, 0.1f, 1f);
     [SerializeField] private Color coreColor = new Color(1f, 1f, 0.8f, 1f);
 
+    [Header("Damage")]
+    [SerializeField] private float damageInterval = 0.3f; // Minimum time between damage ticks
+
     private GameObject laserObject;
     private LineRenderer lineRenderer;
     private LineRenderer coreRenderer;
+    private float lastDamageTime;
 
     private void Awake()
     {
@@ -81,6 +85,9 @@ public class LaserBeamPattern : BossAttackPattern
             Cleanup();
             yield break;
         }
+
+        // Reset damage timer
+        lastDamageTime = -damageInterval;
 
         // Calculate sweep
         float startAngle = 0;
@@ -203,6 +210,10 @@ public class LaserBeamPattern : BossAttackPattern
 
     private void CheckLaserHits(float angle)
     {
+        // Check damage interval cooldown
+        if (Time.time - lastDamageTime < damageInterval)
+            return;
+
         Vector2 direction = new Vector2(
             Mathf.Cos(angle * Mathf.Deg2Rad),
             Mathf.Sin(angle * Mathf.Deg2Rad)
@@ -216,7 +227,9 @@ public class LaserBeamPattern : BossAttackPattern
             var playerHealth = hit.collider.GetComponent<PlayerHealth>();
             if (playerHealth != null)
             {
-                playerHealth.TakeDamage(damage * Time.deltaTime * 2); // Continuous damage
+                playerHealth.TakeDamage(damage); // Damage per tick (interval-based)
+                lastDamageTime = Time.time;
+                return; // Only damage once per interval
             }
         }
     }

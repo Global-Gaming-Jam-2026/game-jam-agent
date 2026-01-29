@@ -21,6 +21,7 @@ public class SweepAttack : BossAttackPattern
     private Vector3 sweepStartPos;
     private Vector3 sweepEndPos;
     private int sweepDirection;
+    private bool hasHitPlayerThisSweep;
 
     private void Awake()
     {
@@ -92,6 +93,9 @@ public class SweepAttack : BossAttackPattern
     {
         if (isCancelled) yield break;
 
+        // Reset hit tracking for this sweep
+        hasHitPlayerThisSweep = false;
+
         // Hide telegraph, prepare attack
         if (sweepVisual != null)
         {
@@ -120,8 +124,27 @@ public class SweepAttack : BossAttackPattern
                 sweepVisual.transform.position = currentPos;
             }
 
-            // Check for hits along the sweep
-            DealDamageToPlayer(currentPos, new Vector2(sweepWidth, sweepHeight), damage);
+            // Check for hits along the sweep (only damage once per sweep)
+            if (!hasHitPlayerThisSweep)
+            {
+                Collider2D[] hits = Physics2D.OverlapBoxAll(currentPos, new Vector2(sweepWidth, sweepHeight), 0, LayerMask.GetMask("Player"));
+                foreach (var hit in hits)
+                {
+                    var playerHealth = hit.GetComponent<PlayerHealth>();
+                    if (playerHealth != null)
+                    {
+                        playerHealth.TakeDamage(damage);
+                        hasHitPlayerThisSweep = true;
+
+                        // Screen shake on hit
+                        if (CameraShake.Instance != null)
+                        {
+                            CameraShake.Instance.ShakeBossAttack();
+                        }
+                        break;
+                    }
+                }
+            }
 
             elapsed += Time.deltaTime;
             yield return null;

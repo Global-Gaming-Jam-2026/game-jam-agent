@@ -213,6 +213,17 @@ public class GameSetupWizard : EditorWindow
         attackPoint.transform.SetParent(player.transform);
         attackPoint.transform.localPosition = new Vector3(0.8f, 0, 0);
 
+        // Create hurtbox child for receiving damage from boss attacks
+        GameObject hurtbox = new GameObject("Hurtbox");
+        hurtbox.transform.SetParent(player.transform);
+        hurtbox.transform.localPosition = Vector3.zero;
+        hurtbox.layer = LayerMask.NameToLayer("Player");
+        var hurtboxCol = hurtbox.AddComponent<BoxCollider2D>();
+        hurtboxCol.isTrigger = true;
+        hurtboxCol.size = new Vector2(0.6f, 1.3f);
+        var hurtboxComp = hurtbox.AddComponent<Hurtbox>();
+        hurtboxComp.isPlayerOwned = true;
+
         player.transform.position = new Vector3(-3, 0, 0);
 
         return player;

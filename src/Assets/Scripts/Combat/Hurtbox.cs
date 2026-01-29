@@ -8,7 +8,7 @@ using UnityEngine;
 public class Hurtbox : MonoBehaviour
 {
     [Header("Settings")]
-    [SerializeField] private bool isPlayerOwned = true;
+    [SerializeField] public bool isPlayerOwned = true;
     [SerializeField] private float damageMultiplier = 1f;
 
     [Header("References")]

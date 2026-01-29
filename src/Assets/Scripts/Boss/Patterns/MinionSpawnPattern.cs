@@ -101,9 +101,10 @@ public class MinionSpawnPattern : BossAttackPattern
 
             SpawnMinion(spawnPos);
 
-            if (attackSound != null)
+            // Only play sound for first minion to avoid audio stacking
+            if (attackSound != null && i == 0)
             {
-                AudioSource.PlayClipAtPoint(attackSound, spawnPos, 0.5f);
+                AudioSource.PlayClipAtPoint(attackSound, transform.position, 0.7f);
             }
 
             yield return new WaitForSeconds(timeBetweenSpawns / speedMultiplier);
@@ -300,7 +301,7 @@ public class MinionAI : MonoBehaviour
     private void OrbitBoss()
     {
         if (boss == null) return;
-        orbitAngle += speed * 20f * Time.deltaTime;
+        orbitAngle += speed * 8f * Time.deltaTime; // Reduced from 20f for smoother orbit
         float radius = 2f;
         Vector3 offset = new Vector3(
             Mathf.Cos(orbitAngle * Mathf.Deg2Rad) * radius,
