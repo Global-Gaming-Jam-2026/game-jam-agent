@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(git checkout:*)",
+      "Bash(where:*)",
+      "Bash(findstr:*)",
+      "Bash(reg query \"HKEY_CURRENT_USER\\\\Software\\\\Unity Technologies\\\\Installer\")",
+      "Bash(powershell.exe:*)",
+      "Bash(find:*)",
+      "Bash(timeout:*)"
+    ]
+  }
+}
