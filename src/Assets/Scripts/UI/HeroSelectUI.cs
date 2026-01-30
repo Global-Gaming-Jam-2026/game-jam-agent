@@ -1,6 +1,5 @@
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 /// <summary>
 /// Hero selection UI for the main menu.
@@ -12,9 +11,9 @@ public class HeroSelectUI : MonoBehaviour
     [SerializeField] private Transform heroButtonContainer;
     [SerializeField] private GameObject heroButtonPrefab;
     [SerializeField] private Image heroPreviewImage;
-    [SerializeField] private TextMeshProUGUI heroNameText;
-    [SerializeField] private TextMeshProUGUI heroDescriptionText;
-    [SerializeField] private TextMeshProUGUI heroStatsText;
+    [SerializeField] private Text heroNameText;
+    [SerializeField] private Text heroDescriptionText;
+    [SerializeField] private Text heroStatsText;
     [SerializeField] private Button confirmButton;
     [SerializeField] private Button backButton;
 
@@ -93,18 +92,10 @@ public class HeroSelectUI : MonoBehaviour
             }
 
             // Set button text
-            var text = button.GetComponentInChildren<TextMeshProUGUI>();
+            var text = button.GetComponentInChildren<Text>();
             if (text != null)
             {
                 text.text = hero.heroName;
-            }
-            else
-            {
-                var legacyText = button.GetComponentInChildren<Text>();
-                if (legacyText != null)
-                {
-                    legacyText.text = hero.heroName;
-                }
             }
         }
     }

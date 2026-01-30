@@ -38,7 +38,9 @@ public class PlayerCombat : MonoBehaviour
     private static readonly int AnimCombo = Animator.StringToHash("ComboIndex");
 
     public bool IsAttacking => isAttacking;
-    public event System.Action<int> OnAttackStart; // passes combo index
+    public event System.Action<int> OnAttackStartCombo; // passes combo index
+    public event System.Action OnAttackStart;
+    public event System.Action OnAttackEnd;
     public event System.Action OnAttackHit;
 
     private enum AttackPhase { Windup, Active, Recovery }
@@ -166,7 +168,8 @@ public class PlayerCombat : MonoBehaviour
             animator.SetTrigger(AnimAttack);
         }
 
-        OnAttackStart?.Invoke(currentCombo);
+        OnAttackStartCombo?.Invoke(currentCombo);
+        OnAttackStart?.Invoke();
     }
 
     private void AdvanceAttackPhase()
@@ -206,28 +209,40 @@ public class PlayerCombat : MonoBehaviour
             if (health != null)
             {
                 float finalDamage = attackDamage;
+                bool isCritical = false;
 
-                // Bonus damage on last hit of combo
+                // Bonus damage on last hit of combo (critical)
                 if (currentCombo == maxComboCount)
                 {
                     finalDamage *= 1.5f;
+                    isCritical = true;
                 }
+
+                // Calculate hit position (between player and enemy)
+                Vector3 hitPosition = (transform.position + hit.transform.position) / 2f;
+                hitPosition.y += 0.5f; // Raise slightly for better visibility
 
                 health.TakeDamage(finalDamage);
                 OnAttackHit?.Invoke();
 
-                // Trigger hit feedback
-                TriggerHitFeedback();
+                // Trigger hit feedback with position and damage
+                TriggerHitFeedback(hitPosition, finalDamage, isCritical);
+
+                // Combo finisher effect
+                if (isCritical && HitFeedback.Instance != null)
+                {
+                    HitFeedback.Instance.ComboFinisher(hitPosition, currentCombo);
+                }
             }
         }
     }
 
-    private void TriggerHitFeedback()
+    private void TriggerHitFeedback(Vector3 hitPosition, float damage, bool isCritical)
     {
-        // Use centralized HitFeedback system for hitstop + screen shake
+        // Use centralized HitFeedback system for all feedback
         if (HitFeedback.Instance != null)
         {
-            HitFeedback.Instance.PlayerHitEnemy();
+            HitFeedback.Instance.PlayerHitEnemy(hitPosition, damage, isCritical);
         }
         else
         {
@@ -236,6 +251,12 @@ public class PlayerCombat : MonoBehaviour
             {
                 CameraShake.Instance.ShakeLight();
             }
+
+            // Try to show damage numbers anyway
+            if (DamageNumberUI.Instance != null)
+            {
+                DamageNumberUI.Instance.ShowDamage(hitPosition, damage, isCritical);
+            }
         }
     }
 
@@ -243,6 +264,7 @@ public class PlayerCombat : MonoBehaviour
     {
         isAttacking = false;
         comboResetTimer = comboResetTime;
+        OnAttackEnd?.Invoke();
     }
 
     /// <summary>

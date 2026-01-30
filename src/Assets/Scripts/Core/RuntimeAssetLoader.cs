@@ -4,6 +4,7 @@ using System.Collections.Generic;
 /// <summary>
 /// Generates sprites and data assets at runtime so the game has visuals
 /// without requiring manual Unity Editor setup.
+/// Uses DetailedSpriteGenerator for high-quality character art with animations.
 /// </summary>
 public static class RuntimeAssetLoader
 {
@@ -11,6 +12,17 @@ public static class RuntimeAssetLoader
     private static Dictionary<string, Sprite> bossSprites = new Dictionary<string, Sprite>();
     private static Dictionary<string, Sprite> effectSprites = new Dictionary<string, Sprite>();
     private static Dictionary<string, Sprite> arenaSprites = new Dictionary<string, Sprite>();
+
+    // Animation frame caches
+    private static Dictionary<string, Sprite[]> heroIdleFrames = new Dictionary<string, Sprite[]>();
+    private static Dictionary<string, Sprite[]> heroAttackFrames = new Dictionary<string, Sprite[]>();
+    private static Dictionary<string, Sprite[]> heroDodgeFrames = new Dictionary<string, Sprite[]>();
+    private static Dictionary<string, Sprite[]> heroHurtFrames = new Dictionary<string, Sprite[]>();
+
+    private static Dictionary<string, Sprite[]> bossIdleFrames = new Dictionary<string, Sprite[]>();
+    private static Dictionary<string, Sprite[]> bossAttackFrames = new Dictionary<string, Sprite[]>();
+    private static Dictionary<string, Sprite[]> bossHurtFrames = new Dictionary<string, Sprite[]>();
+    private static Dictionary<string, Sprite[]> bossTransitionFrames = new Dictionary<string, Sprite[]>();
 
     private static Dictionary<string, HeroData> heroData = new Dictionary<string, HeroData>();
     private static Dictionary<string, BossData> bossData = new Dictionary<string, BossData>();
@@ -42,137 +54,74 @@ public static class RuntimeAssetLoader
 
     private static void GenerateHeroSprites()
     {
-        // Bronze Warrior - warm bronze tones
-        heroSprites["BronzeWarrior"] = CreateHeroSprite(
-            new Color(0.8f, 0.5f, 0.2f),   // Bronze body
-            new Color(0.6f, 0.35f, 0.15f), // Darker trim
-            new Color(1f, 0.9f, 0.7f)      // Light highlights
-        );
+        // Bronze Warrior - warm bronze tones (Warrior type)
+        Color bronzeBody = new Color(0.8f, 0.5f, 0.2f);
+        Color bronzeArmor = new Color(0.6f, 0.35f, 0.15f);
+        Color bronzeSkin = new Color(0.95f, 0.8f, 0.7f);
+        Color bronzeWeapon = new Color(0.7f, 0.7f, 0.75f);
 
-        // Shadow Dancer - purple/dark tones
-        heroSprites["ShadowDancer"] = CreateHeroSprite(
-            new Color(0.3f, 0.2f, 0.4f),   // Dark purple body
-            new Color(0.2f, 0.1f, 0.3f),   // Darker trim
-            new Color(0.6f, 0.4f, 0.8f)    // Light purple highlights
-        );
+        heroIdleFrames["BronzeWarrior"] = DetailedSpriteGenerator.GenerateHeroIdleFrames(bronzeBody, bronzeArmor, bronzeSkin, bronzeWeapon, DetailedSpriteGenerator.HeroType.Warrior);
+        heroAttackFrames["BronzeWarrior"] = DetailedSpriteGenerator.GenerateHeroAttackFrames(bronzeBody, bronzeArmor, bronzeSkin, bronzeWeapon, DetailedSpriteGenerator.HeroType.Warrior);
+        heroDodgeFrames["BronzeWarrior"] = DetailedSpriteGenerator.GenerateHeroDodgeFrames(bronzeBody, bronzeArmor, bronzeSkin, bronzeWeapon, DetailedSpriteGenerator.HeroType.Warrior);
+        heroHurtFrames["BronzeWarrior"] = DetailedSpriteGenerator.GenerateHeroHurtFrames(bronzeBody, bronzeArmor, bronzeSkin, bronzeWeapon, DetailedSpriteGenerator.HeroType.Warrior);
+        heroSprites["BronzeWarrior"] = heroIdleFrames["BronzeWarrior"][0];
 
-        // Flame Bearer - red/orange tones
-        heroSprites["FlameBearer"] = CreateHeroSprite(
-            new Color(0.9f, 0.3f, 0.1f),   // Red-orange body
-            new Color(0.7f, 0.2f, 0.05f),  // Darker trim
-            new Color(1f, 0.6f, 0.2f)      // Orange highlights
-        );
+        // Shadow Dancer - purple/dark tones (Rogue type)
+        Color shadowBody = new Color(0.3f, 0.2f, 0.4f);
+        Color shadowArmor = new Color(0.2f, 0.15f, 0.25f);
+        Color shadowSkin = new Color(0.85f, 0.75f, 0.85f);
+        Color shadowWeapon = new Color(0.5f, 0.3f, 0.6f);
 
-        Debug.Log($"[RuntimeAssetLoader] Generated {heroSprites.Count} hero sprites");
-    }
+        heroIdleFrames["ShadowDancer"] = DetailedSpriteGenerator.GenerateHeroIdleFrames(shadowBody, shadowArmor, shadowSkin, shadowWeapon, DetailedSpriteGenerator.HeroType.Rogue);
+        heroAttackFrames["ShadowDancer"] = DetailedSpriteGenerator.GenerateHeroAttackFrames(shadowBody, shadowArmor, shadowSkin, shadowWeapon, DetailedSpriteGenerator.HeroType.Rogue);
+        heroDodgeFrames["ShadowDancer"] = DetailedSpriteGenerator.GenerateHeroDodgeFrames(shadowBody, shadowArmor, shadowSkin, shadowWeapon, DetailedSpriteGenerator.HeroType.Rogue);
+        heroHurtFrames["ShadowDancer"] = DetailedSpriteGenerator.GenerateHeroHurtFrames(shadowBody, shadowArmor, shadowSkin, shadowWeapon, DetailedSpriteGenerator.HeroType.Rogue);
+        heroSprites["ShadowDancer"] = heroIdleFrames["ShadowDancer"][0];
 
-    private static Sprite CreateHeroSprite(Color bodyColor, Color trimColor, Color highlightColor)
-    {
-        int size = 64;
-        Texture2D tex = new Texture2D(size, size);
-        tex.filterMode = FilterMode.Point;
+        // Flame Bearer - red/orange tones (Mage type)
+        Color flameBody = new Color(0.9f, 0.3f, 0.1f);
+        Color flameArmor = new Color(0.7f, 0.2f, 0.1f);
+        Color flameSkin = new Color(0.95f, 0.85f, 0.75f);
+        Color flameWeapon = new Color(1f, 0.5f, 0.2f);
 
-        // Clear to transparent
-        Color[] pixels = new Color[size * size];
-        for (int i = 0; i < pixels.Length; i++)
-            pixels[i] = Color.clear;
-        tex.SetPixels(pixels);
+        heroIdleFrames["FlameBearer"] = DetailedSpriteGenerator.GenerateHeroIdleFrames(flameBody, flameArmor, flameSkin, flameWeapon, DetailedSpriteGenerator.HeroType.Mage);
+        heroAttackFrames["FlameBearer"] = DetailedSpriteGenerator.GenerateHeroAttackFrames(flameBody, flameArmor, flameSkin, flameWeapon, DetailedSpriteGenerator.HeroType.Mage);
+        heroDodgeFrames["FlameBearer"] = DetailedSpriteGenerator.GenerateHeroDodgeFrames(flameBody, flameArmor, flameSkin, flameWeapon, DetailedSpriteGenerator.HeroType.Mage);
+        heroHurtFrames["FlameBearer"] = DetailedSpriteGenerator.GenerateHeroHurtFrames(flameBody, flameArmor, flameSkin, flameWeapon, DetailedSpriteGenerator.HeroType.Mage);
+        heroSprites["FlameBearer"] = heroIdleFrames["FlameBearer"][0];
 
-        // Draw body (rectangle 16-48 x 8-40)
-        DrawFilledRect(tex, 20, 8, 24, 32, bodyColor);
-
-        // Draw head (circle at center top)
-        DrawFilledCircle(tex, 32, 48, 12, bodyColor);
-
-        // Draw arms (rectangles on sides)
-        DrawFilledRect(tex, 8, 20, 12, 16, bodyColor);
-        DrawFilledRect(tex, 44, 20, 12, 16, bodyColor);
-
-        // Draw legs (rectangles at bottom)
-        DrawFilledRect(tex, 22, 0, 8, 12, trimColor);
-        DrawFilledRect(tex, 34, 0, 8, 12, trimColor);
-
-        // Draw eyes (white with black pupils)
-        DrawFilledCircle(tex, 28, 50, 3, Color.white);
-        DrawFilledCircle(tex, 36, 50, 3, Color.white);
-        DrawFilledCircle(tex, 28, 50, 1, Color.black);
-        DrawFilledCircle(tex, 36, 50, 1, Color.black);
-
-        // Highlight on head
-        DrawFilledCircle(tex, 35, 54, 2, highlightColor);
-
-        // Body trim/belt
-        DrawFilledRect(tex, 20, 18, 24, 4, trimColor);
-
-        tex.Apply();
-
-        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 64f);
+        Debug.Log($"[RuntimeAssetLoader] Generated {heroSprites.Count} detailed hero sprites with animations");
     }
 
     private static void GenerateBossSprites()
     {
         // Bronze Mask - large imposing mask
-        bossSprites["BronzeMask"] = CreateBossSprite(
-            new Color(0.8f, 0.5f, 0.2f),   // Bronze body
-            new Color(1f, 0.9f, 0.5f),     // Golden eyes
-            new Color(0.5f, 0.3f, 0.1f)    // Dark accents
-        );
+        Color bronzeBody = new Color(0.8f, 0.5f, 0.2f);
+        Color bronzeEye = new Color(1f, 0.9f, 0.5f);
+        Color bronzeAccent = new Color(0.5f, 0.3f, 0.1f);
+        Color bronzeGlow = new Color(1f, 0.7f, 0.3f);
+        Color bronzePhase2 = new Color(0.9f, 0.2f, 0.2f);
+
+        bossIdleFrames["BronzeMask"] = DetailedSpriteGenerator.GenerateBossIdleFrames(bronzeBody, bronzeEye, bronzeAccent, bronzeGlow);
+        bossAttackFrames["BronzeMask"] = DetailedSpriteGenerator.GenerateBossAttackFrames(bronzeBody, bronzeEye, bronzeAccent, bronzeGlow);
+        bossHurtFrames["BronzeMask"] = DetailedSpriteGenerator.GenerateBossHurtFrames(bronzeBody, bronzeEye, bronzeAccent, bronzeGlow);
+        bossTransitionFrames["BronzeMask"] = DetailedSpriteGenerator.GenerateBossTransitionFrames(bronzeBody, bronzeEye, bronzeAccent, bronzeGlow, bronzePhase2);
+        bossSprites["BronzeMask"] = bossIdleFrames["BronzeMask"][0];
 
         // Chaos Totem - purple chaos entity
-        bossSprites["ChaosTotem"] = CreateBossSprite(
-            new Color(0.5f, 0.2f, 0.4f),   // Purple body
-            new Color(1f, 0.3f, 0.5f),     // Pink glowing eyes
-            new Color(0.3f, 0.1f, 0.2f)    // Dark purple accents
-        );
+        Color chaosBody = new Color(0.5f, 0.2f, 0.4f);
+        Color chaosEye = new Color(1f, 0.3f, 0.5f);
+        Color chaosAccent = new Color(0.3f, 0.1f, 0.2f);
+        Color chaosGlow = new Color(0.8f, 0.3f, 0.6f);
+        Color chaosPhase2 = new Color(0.6f, 0.1f, 0.4f);
 
-        Debug.Log($"[RuntimeAssetLoader] Generated {bossSprites.Count} boss sprites");
-    }
+        bossIdleFrames["ChaosTotem"] = DetailedSpriteGenerator.GenerateBossIdleFrames(chaosBody, chaosEye, chaosAccent, chaosGlow);
+        bossAttackFrames["ChaosTotem"] = DetailedSpriteGenerator.GenerateBossAttackFrames(chaosBody, chaosEye, chaosAccent, chaosGlow);
+        bossHurtFrames["ChaosTotem"] = DetailedSpriteGenerator.GenerateBossHurtFrames(chaosBody, chaosEye, chaosAccent, chaosGlow);
+        bossTransitionFrames["ChaosTotem"] = DetailedSpriteGenerator.GenerateBossTransitionFrames(chaosBody, chaosEye, chaosAccent, chaosGlow, chaosPhase2);
+        bossSprites["ChaosTotem"] = bossIdleFrames["ChaosTotem"][0];
 
-    private static Sprite CreateBossSprite(Color bodyColor, Color eyeColor, Color accentColor)
-    {
-        int size = 128;
-        Texture2D tex = new Texture2D(size, size);
-        tex.filterMode = FilterMode.Point;
-
-        // Clear to transparent
-        Color[] pixels = new Color[size * size];
-        for (int i = 0; i < pixels.Length; i++)
-            pixels[i] = Color.clear;
-        tex.SetPixels(pixels);
-
-        // Draw main body (large oval/mask shape)
-        DrawFilledOval(tex, 64, 64, 50, 55, bodyColor);
-
-        // Draw inner mask detail
-        DrawFilledOval(tex, 64, 64, 40, 45, accentColor);
-        DrawFilledOval(tex, 64, 64, 35, 40, bodyColor);
-
-        // Draw glowing eyes (large and menacing)
-        DrawFilledOval(tex, 44, 75, 12, 8, eyeColor);
-        DrawFilledOval(tex, 84, 75, 12, 8, eyeColor);
-
-        // Black pupils
-        DrawFilledCircle(tex, 44, 75, 4, Color.black);
-        DrawFilledCircle(tex, 84, 75, 4, Color.black);
-
-        // Eye glow effect
-        DrawFilledOval(tex, 44, 75, 14, 10, new Color(eyeColor.r, eyeColor.g, eyeColor.b, 0.3f));
-        DrawFilledOval(tex, 84, 75, 14, 10, new Color(eyeColor.r, eyeColor.g, eyeColor.b, 0.3f));
-
-        // Mouth/markings
-        DrawFilledRect(tex, 50, 40, 28, 6, accentColor);
-
-        // Decorative horns/protrusions at top
-        DrawFilledTriangle(tex, 30, 115, 20, 90, 40, 90, accentColor);
-        DrawFilledTriangle(tex, 98, 115, 88, 90, 108, 90, accentColor);
-
-        // Side decorations
-        DrawFilledRect(tex, 10, 55, 8, 30, accentColor);
-        DrawFilledRect(tex, 110, 55, 8, 30, accentColor);
-
-        tex.Apply();
-
-        return Sprite.Create(tex, new Rect(0, 0, size, size), new Vector2(0.5f, 0.5f), 64f);
+        Debug.Log($"[RuntimeAssetLoader] Generated {bossSprites.Count} detailed boss sprites with animations");
     }
 
     private static void GenerateEffectSprites()
@@ -791,6 +740,66 @@ public static class RuntimeAssetLoader
     {
         if (!initialized) Initialize();
         return new List<BossData>(bossData.Values);
+    }
+
+    #endregion
+
+    #region Animation Frame Access
+
+    public static Sprite[] GetHeroIdleFrames(string heroName)
+    {
+        if (!initialized) Initialize();
+        string key = heroName.Replace(" ", "");
+        return heroIdleFrames.TryGetValue(key, out Sprite[] frames) ? frames : null;
+    }
+
+    public static Sprite[] GetHeroAttackFrames(string heroName)
+    {
+        if (!initialized) Initialize();
+        string key = heroName.Replace(" ", "");
+        return heroAttackFrames.TryGetValue(key, out Sprite[] frames) ? frames : null;
+    }
+
+    public static Sprite[] GetHeroDodgeFrames(string heroName)
+    {
+        if (!initialized) Initialize();
+        string key = heroName.Replace(" ", "");
+        return heroDodgeFrames.TryGetValue(key, out Sprite[] frames) ? frames : null;
+    }
+
+    public static Sprite[] GetHeroHurtFrames(string heroName)
+    {
+        if (!initialized) Initialize();
+        string key = heroName.Replace(" ", "");
+        return heroHurtFrames.TryGetValue(key, out Sprite[] frames) ? frames : null;
+    }
+
+    public static Sprite[] GetBossIdleFrames(string bossName)
+    {
+        if (!initialized) Initialize();
+        string key = bossName.Replace(" ", "").Replace("The", "");
+        return bossIdleFrames.TryGetValue(key, out Sprite[] frames) ? frames : null;
+    }
+
+    public static Sprite[] GetBossAttackFrames(string bossName)
+    {
+        if (!initialized) Initialize();
+        string key = bossName.Replace(" ", "").Replace("The", "");
+        return bossAttackFrames.TryGetValue(key, out Sprite[] frames) ? frames : null;
+    }
+
+    public static Sprite[] GetBossHurtFrames(string bossName)
+    {
+        if (!initialized) Initialize();
+        string key = bossName.Replace(" ", "").Replace("The", "");
+        return bossHurtFrames.TryGetValue(key, out Sprite[] frames) ? frames : null;
+    }
+
+    public static Sprite[] GetBossTransitionFrames(string bossName)
+    {
+        if (!initialized) Initialize();
+        string key = bossName.Replace(" ", "").Replace("The", "");
+        return bossTransitionFrames.TryGetValue(key, out Sprite[] frames) ? frames : null;
     }
 
     #endregion

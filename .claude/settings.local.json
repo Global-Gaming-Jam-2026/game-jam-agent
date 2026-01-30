@@ -11,7 +11,14 @@
       "Bash(reg query \"HKEY_CURRENT_USER\\\\Software\\\\Unity Technologies\\\\Installer\")",
       "Bash(powershell.exe:*)",
       "Bash(find:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(git -C \"c:\\\\Users\\\\User\\\\Coding\\\\Personal\\\\GameJamAgent\" checkout unity-project-setup)",
+      "Bash(git pull:*)",
+      "Bash(git merge:*)",
+      "Bash(\"C:\\\\Program Files\\\\Unity\\\\Hub\\\\Editor\\\\6000.3.6f1\\\\Editor\\\\Unity.exe\" -projectPath \"c:\\\\Users\\\\User\\\\Coding\\\\Personal\\\\GameJamAgent\\\\src\")",
+      "Bash(powershell -Command:*)",
+      "Bash(tasklist /FI \"IMAGENAME eq Unity.exe\")",
+      "Bash(tasklist:*)"
     ]
   }
 }

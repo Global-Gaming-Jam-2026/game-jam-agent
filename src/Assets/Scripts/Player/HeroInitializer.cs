@@ -4,6 +4,7 @@ using UnityEngine;
 /// Initializes the player with HeroData configuration.
 /// Attach this to the Player GameObject alongside other player components.
 /// Reads from GameConfig.selectedHero and applies stats/colors.
+/// Sets up sprite animations using SpriteAnimator.
 /// </summary>
 public class HeroInitializer : MonoBehaviour
 {
@@ -17,6 +18,7 @@ public class HeroInitializer : MonoBehaviour
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private PlayerParry playerParry;
     [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private SpriteAnimator spriteAnimator;
 
     private HeroData currentHero;
 
@@ -28,6 +30,13 @@ public class HeroInitializer : MonoBehaviour
         if (playerHealth == null) playerHealth = GetComponent<PlayerHealth>();
         if (playerParry == null) playerParry = GetComponent<PlayerParry>();
         if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteAnimator == null) spriteAnimator = GetComponent<SpriteAnimator>();
+
+        // Add SpriteAnimator if not present
+        if (spriteAnimator == null)
+        {
+            spriteAnimator = gameObject.AddComponent<SpriteAnimator>();
+        }
     }
 
     private void Start()
@@ -90,7 +99,24 @@ public class HeroInitializer : MonoBehaviour
 
     private void ApplyVisuals()
     {
-        // Apply sprite
+        string heroKey = currentHero.heroName.Replace(" ", "");
+
+        // Set up animation frames using SpriteAnimator
+        if (spriteAnimator != null)
+        {
+            var idleFrames = RuntimeAssetLoader.GetHeroIdleFrames(heroKey);
+            var attackFrames = RuntimeAssetLoader.GetHeroAttackFrames(heroKey);
+            var dodgeFrames = RuntimeAssetLoader.GetHeroDodgeFrames(heroKey);
+            var hurtFrames = RuntimeAssetLoader.GetHeroHurtFrames(heroKey);
+
+            if (idleFrames != null)
+            {
+                spriteAnimator.SetupCharacterAnimations(idleFrames, idleFrames, attackFrames, dodgeFrames, hurtFrames);
+                Debug.Log($"[HeroInitializer] Set up animations for {currentHero.heroName}");
+            }
+        }
+
+        // Apply sprite (first frame of idle or fallback)
         if (spriteRenderer != null)
         {
             if (currentHero.idleSprite != null)
@@ -100,7 +126,7 @@ public class HeroInitializer : MonoBehaviour
             else
             {
                 // Fallback to runtime-generated sprite
-                var fallbackSprite = RuntimeAssetLoader.GetHeroSprite(currentHero.heroName);
+                var fallbackSprite = RuntimeAssetLoader.GetHeroSprite(heroKey);
                 if (fallbackSprite != null)
                 {
                     spriteRenderer.sprite = fallbackSprite;
@@ -113,11 +139,69 @@ public class HeroInitializer : MonoBehaviour
         // Apply scale
         transform.localScale = Vector3.one * currentHero.spriteScale;
 
-        // Apply animator if present
+        // Apply animator if present (fallback to Unity Animator)
         var animator = GetComponent<Animator>();
         if (animator != null && currentHero.animatorController != null)
         {
             animator.runtimeAnimatorController = currentHero.animatorController;
+        }
+
+        // Subscribe to animation events
+        SubscribeToAnimationEvents();
+    }
+
+    private void SubscribeToAnimationEvents()
+    {
+        // Subscribe to PlayerController events
+        if (playerController != null)
+        {
+            playerController.OnDodgeStart += () =>
+            {
+                if (spriteAnimator != null && spriteAnimator.HasAnimation("dodge"))
+                    spriteAnimator.Play("dodge");
+            };
+
+            playerController.OnDodgeEnd += () =>
+            {
+                if (spriteAnimator != null)
+                    spriteAnimator.Play("idle");
+            };
+        }
+
+        // Subscribe to PlayerCombat events
+        if (playerCombat != null)
+        {
+            playerCombat.OnAttackStart += () =>
+            {
+                if (spriteAnimator != null && spriteAnimator.HasAnimation("attack"))
+                    spriteAnimator.Play("attack");
+            };
+
+            playerCombat.OnAttackEnd += () =>
+            {
+                if (spriteAnimator != null)
+                    spriteAnimator.Play("idle");
+            };
+        }
+
+        // Subscribe to PlayerHealth events
+        if (playerHealth != null)
+        {
+            playerHealth.OnDamaged += () =>
+            {
+                if (spriteAnimator != null && spriteAnimator.HasAnimation("hurt"))
+                    spriteAnimator.Play("hurt");
+            };
+        }
+
+        // Return to idle when hurt animation completes
+        if (spriteAnimator != null)
+        {
+            spriteAnimator.OnAnimationComplete += (animName) =>
+            {
+                if (animName == "hurt" || animName == "attack")
+                    spriteAnimator.Play("idle");
+            };
         }
     }
 

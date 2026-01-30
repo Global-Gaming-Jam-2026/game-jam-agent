@@ -168,7 +168,15 @@ public class LaserBeamPattern : BossAttackPattern
         lineRenderer.endWidth = 0.1f;
         lineRenderer.startColor = telegraphColor;
         lineRenderer.endColor = telegraphColor;
-        lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        lineRenderer.useWorldSpace = true;
+
+        // Use a simple unlit material
+        Material laserMat = new Material(Shader.Find("Legacy Shaders/Particles/Alpha Blended"));
+        if (laserMat.shader == null || laserMat.shader.name == "Hidden/InternalErrorShader")
+        {
+            laserMat = new Material(Shader.Find("Unlit/Color"));
+        }
+        lineRenderer.material = laserMat;
         lineRenderer.sortingOrder = 15;
 
         // Core (brighter center)
@@ -180,7 +188,8 @@ public class LaserBeamPattern : BossAttackPattern
         coreRenderer.endWidth = laserWidth * 0.2f;
         coreRenderer.startColor = coreColor;
         coreRenderer.endColor = coreColor;
-        coreRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        coreRenderer.useWorldSpace = true;
+        coreRenderer.material = laserMat;
         coreRenderer.sortingOrder = 16;
         coreRenderer.enabled = false;
     }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 /// <summary>
 /// Centralized audio management for the game.
 /// Handles SFX, music, and volume control.
+/// Integrates with ProceduralAudio for runtime-generated sounds.
 /// </summary>
 public class AudioManager : MonoBehaviour
 {
@@ -19,18 +20,21 @@ public class AudioManager : MonoBehaviour
     [Range(0f, 1f)] public float musicVolume = 0.7f;
     [Range(0f, 1f)] public float sfxVolume = 1f;
 
-    [Header("Music")]
+    [Header("Music (optional - uses ProceduralAudio if null)")]
     [SerializeField] private AudioClip menuMusic;
     [SerializeField] private AudioClip battleMusic;
     [SerializeField] private AudioClip victoryMusic;
     [SerializeField] private AudioClip defeatMusic;
 
-    [Header("UI Sounds")]
+    [Header("UI Sounds (optional - uses ProceduralAudio if null)")]
     [SerializeField] private AudioClip menuClick;
     [SerializeField] private AudioClip menuHover;
+    [SerializeField] private AudioClip menuConfirm;
+    [SerializeField] private AudioClip menuCancel;
 
     private List<AudioSource> sfxPool;
     private int currentPoolIndex = 0;
+    private bool useProceduralAudio = true;
 
     private void Awake()
     {
@@ -105,10 +109,10 @@ public class AudioManager : MonoBehaviour
     {
         AudioClip clip = type switch
         {
-            MusicType.Menu => menuMusic,
-            MusicType.Battle => battleMusic,
-            MusicType.Victory => victoryMusic,
-            MusicType.Defeat => defeatMusic,
+            MusicType.Menu => menuMusic ?? ProceduralAudio.GetMenuMusic(),
+            MusicType.Battle => battleMusic ?? ProceduralAudio.GetBattleMusic(),
+            MusicType.Victory => victoryMusic ?? ProceduralAudio.GetVictorySound(),
+            MusicType.Defeat => defeatMusic ?? ProceduralAudio.GetDefeatSound(),
             _ => null
         };
 
@@ -161,8 +165,10 @@ public class AudioManager : MonoBehaviour
     {
         AudioClip clip = type switch
         {
-            UISoundType.Click => menuClick,
-            UISoundType.Hover => menuHover,
+            UISoundType.Click => menuClick ?? ProceduralAudio.GetUIClickSound(),
+            UISoundType.Hover => menuHover ?? ProceduralAudio.GetUIHoverSound(),
+            UISoundType.Confirm => menuConfirm ?? ProceduralAudio.GetUIConfirmSound(),
+            UISoundType.Cancel => menuCancel ?? ProceduralAudio.GetUICancelSound(),
             _ => null
         };
 
@@ -171,6 +177,138 @@ public class AudioManager : MonoBehaviour
             PlaySFX(clip, 0.8f);
         }
     }
+
+    #region Combat Sound Methods
+
+    /// <summary>
+    /// Play player attack sound with combo variation
+    /// </summary>
+    public void PlayPlayerAttack(int comboIndex = 1)
+    {
+        var clip = ProceduralAudio.GetPlayerAttackSound(comboIndex);
+        if (clip != null)
+        {
+            PlaySFXWithPitch(clip, 0.95f, 1.05f, 0.7f);
+        }
+    }
+
+    /// <summary>
+    /// Play player hit confirmation sound
+    /// </summary>
+    public void PlayPlayerHit(bool isCritical = false)
+    {
+        var clip = isCritical ? ProceduralAudio.GetCriticalSound() : ProceduralAudio.GetPlayerHitSound();
+        if (clip != null)
+        {
+            PlaySFX(clip, isCritical ? 0.8f : 0.6f);
+        }
+    }
+
+    /// <summary>
+    /// Play player dodge sound
+    /// </summary>
+    public void PlayPlayerDodge()
+    {
+        var clip = ProceduralAudio.GetPlayerDodgeSound();
+        if (clip != null)
+        {
+            PlaySFXWithPitch(clip, 0.9f, 1.1f, 0.5f);
+        }
+    }
+
+    /// <summary>
+    /// Play player hurt sound
+    /// </summary>
+    public void PlayPlayerHurt()
+    {
+        var clip = ProceduralAudio.GetPlayerHurtSound();
+        if (clip != null)
+        {
+            PlaySFX(clip, 0.7f);
+        }
+    }
+
+    /// <summary>
+    /// Play parry success sound
+    /// </summary>
+    public void PlayParry()
+    {
+        var clip = ProceduralAudio.GetParrySound();
+        if (clip != null)
+        {
+            PlaySFX(clip, 0.8f);
+        }
+    }
+
+    /// <summary>
+    /// Play boss attack sound by type
+    /// </summary>
+    public void PlayBossAttack(BossAttackSoundType type)
+    {
+        AudioClip clip = type switch
+        {
+            BossAttackSoundType.Sweep => ProceduralAudio.GetBossSweepSound(),
+            BossAttackSoundType.Slam => ProceduralAudio.GetBossSlamSound(),
+            BossAttackSoundType.Projectile => ProceduralAudio.GetBossProjectileSound(),
+            BossAttackSoundType.Roar => ProceduralAudio.GetBossRoarSound(),
+            _ => null
+        };
+
+        if (clip != null)
+        {
+            PlaySFXWithPitch(clip, 0.9f, 1.1f, 0.8f);
+        }
+    }
+
+    /// <summary>
+    /// Play boss hurt sound
+    /// </summary>
+    public void PlayBossHurt()
+    {
+        var clip = ProceduralAudio.GetBossHurtSound();
+        if (clip != null)
+        {
+            PlaySFX(clip, 0.6f);
+        }
+    }
+
+    /// <summary>
+    /// Play boss phase transition sound
+    /// </summary>
+    public void PlayBossPhaseTransition()
+    {
+        var clip = ProceduralAudio.GetBossPhaseTransitionSound();
+        if (clip != null)
+        {
+            PlaySFX(clip, 0.9f);
+        }
+    }
+
+    /// <summary>
+    /// Play boss death sound
+    /// </summary>
+    public void PlayBossDeath()
+    {
+        var clip = ProceduralAudio.GetBossDeathSound();
+        if (clip != null)
+        {
+            PlaySFX(clip, 1f);
+        }
+    }
+
+    /// <summary>
+    /// Play combo finish sound
+    /// </summary>
+    public void PlayComboFinish()
+    {
+        var clip = ProceduralAudio.GetComboSound();
+        if (clip != null)
+        {
+            PlaySFX(clip, 0.7f);
+        }
+    }
+
+    #endregion
 
     public void SetMasterVolume(float volume)
     {
@@ -204,5 +342,15 @@ public enum MusicType
 public enum UISoundType
 {
     Click,
-    Hover
+    Hover,
+    Confirm,
+    Cancel
+}
+
+public enum BossAttackSoundType
+{
+    Sweep,
+    Slam,
+    Projectile,
+    Roar
 }

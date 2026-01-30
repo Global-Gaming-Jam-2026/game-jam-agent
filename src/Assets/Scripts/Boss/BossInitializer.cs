@@ -5,6 +5,7 @@ using System.Collections.Generic;
 /// Initializes the boss with BossData configuration.
 /// Attach this to the Boss GameObject alongside other boss components.
 /// Reads from GameConfig.selectedBoss and applies stats/colors.
+/// Sets up sprite animations using SpriteAnimator.
 /// </summary>
 public class BossInitializer : MonoBehaviour
 {
@@ -16,6 +17,7 @@ public class BossInitializer : MonoBehaviour
     [SerializeField] private BossControllerMultiPhase bossController;
     [SerializeField] private BossHealth bossHealth;
     [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private SpriteAnimator spriteAnimator;
 
     private BossData currentBoss;
 
@@ -25,6 +27,13 @@ public class BossInitializer : MonoBehaviour
         if (bossController == null) bossController = GetComponent<BossControllerMultiPhase>();
         if (bossHealth == null) bossHealth = GetComponent<BossHealth>();
         if (spriteRenderer == null) spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteAnimator == null) spriteAnimator = GetComponent<SpriteAnimator>();
+
+        // Add SpriteAnimator if not present
+        if (spriteAnimator == null)
+        {
+            spriteAnimator = gameObject.AddComponent<SpriteAnimator>();
+        }
     }
 
     private void Start()
@@ -92,6 +101,23 @@ public class BossInitializer : MonoBehaviour
 
     private void ApplyVisuals()
     {
+        string bossKey = currentBoss.bossName.Replace(" ", "").Replace("The", "");
+
+        // Set up animation frames using SpriteAnimator
+        if (spriteAnimator != null)
+        {
+            var idleFrames = RuntimeAssetLoader.GetBossIdleFrames(bossKey);
+            var attackFrames = RuntimeAssetLoader.GetBossAttackFrames(bossKey);
+            var hurtFrames = RuntimeAssetLoader.GetBossHurtFrames(bossKey);
+            var transitionFrames = RuntimeAssetLoader.GetBossTransitionFrames(bossKey);
+
+            if (idleFrames != null)
+            {
+                spriteAnimator.SetupBossAnimations(idleFrames, attackFrames, hurtFrames, transitionFrames);
+                Debug.Log($"[BossInitializer] Set up animations for {currentBoss.bossName}");
+            }
+        }
+
         if (spriteRenderer != null)
         {
             spriteRenderer.color = currentBoss.primaryColor;
@@ -104,7 +130,7 @@ public class BossInitializer : MonoBehaviour
             else
             {
                 // Fallback to runtime-generated sprite
-                var fallbackSprite = RuntimeAssetLoader.GetBossSprite(currentBoss.bossName);
+                var fallbackSprite = RuntimeAssetLoader.GetBossSprite(bossKey);
                 if (fallbackSprite != null)
                 {
                     spriteRenderer.sprite = fallbackSprite;
@@ -116,6 +142,58 @@ public class BossInitializer : MonoBehaviour
         // Apply scale and position
         transform.localScale = new Vector3(currentBoss.bossScale.x, currentBoss.bossScale.y, 1);
         transform.position = new Vector3(currentBoss.arenaPosition.x, currentBoss.arenaPosition.y, 0);
+
+        // Subscribe to animation events
+        SubscribeToAnimationEvents();
+    }
+
+    private void SubscribeToAnimationEvents()
+    {
+        // Subscribe to boss controller state changes
+        if (bossController != null)
+        {
+            bossController.OnStateChanged += (state) =>
+            {
+                if (spriteAnimator == null) return;
+
+                switch (state)
+                {
+                    case BossControllerMultiPhase.BossState.Idle:
+                        if (spriteAnimator.HasAnimation("idle"))
+                            spriteAnimator.Play("idle");
+                        break;
+                    case BossControllerMultiPhase.BossState.Telegraph:
+                    case BossControllerMultiPhase.BossState.Attacking:
+                        if (spriteAnimator.HasAnimation("attack"))
+                            spriteAnimator.Play("attack");
+                        break;
+                    case BossControllerMultiPhase.BossState.Transforming:
+                        if (spriteAnimator.HasAnimation("transition"))
+                            spriteAnimator.Play("transition");
+                        break;
+                }
+            };
+        }
+
+        // Subscribe to boss health events
+        if (bossHealth != null)
+        {
+            bossHealth.OnDamaged += () =>
+            {
+                if (spriteAnimator != null && spriteAnimator.HasAnimation("hurt"))
+                    spriteAnimator.Play("hurt");
+            };
+        }
+
+        // Return to idle when animations complete
+        if (spriteAnimator != null)
+        {
+            spriteAnimator.OnAnimationComplete += (animName) =>
+            {
+                if (animName == "hurt" || animName == "attack" || animName == "transition")
+                    spriteAnimator.Play("idle");
+            };
+        }
     }
 
     private void ApplyStats()

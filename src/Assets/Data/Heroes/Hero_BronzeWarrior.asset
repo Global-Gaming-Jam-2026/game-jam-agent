@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56af02e480a0ffb44a06ca6334b04fe0, type: 3}
+  m_Name: Hero_BronzeWarrior
+  m_EditorClassIdentifier: Assembly-CSharp::HeroData
+  heroName: Bronze Warrior
+  description: A balanced fighter with quick attacks.
+  portrait: {fileID: 0}
+  idleSprite: {fileID: 0}
+  primaryColor: {r: 0.8, g: 0.5, b: 0.2, a: 1}
+  secondaryColor: {r: 0.56, g: 0.35, b: 0.14, a: 0.7}
+  attackColor: {r: 1, g: 0.7, b: 0.2, a: 1}
+  damageFlashColor: {r: 1, g: 1, b: 1, a: 1}
+  maxHealth: 100
+  moveSpeed: 6
+  dodgeSpeed: 12
+  attackDamage: 25
+  dodgeDuration: 0.4
+  dodgeCooldown: 0.6
+  iFrameDuration: 0.2
+  comboWindow: 0.8
+  specialAbility: 0
+  abilityMultiplier: 1
+  attackSound1: {fileID: 0}
+  attackSound2: {fileID: 0}
+  attackSound3: {fileID: 0}
+  dodgeSound: {fileID: 0}
+  hurtSound: {fileID: 0}
+  deathSound: {fileID: 0}
+  animatorController: {fileID: 0}
+  spriteScale: 1

@@ -7,9 +7,9 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
-    [SerializeField] private float moveSpeed = 6f;
-    [SerializeField] private float acceleration = 50f;
-    [SerializeField] private float deceleration = 50f;
+    [SerializeField] private float moveSpeed = 10f;
+    [SerializeField] private float acceleration = 80f;
+    [SerializeField] private float deceleration = 60f;
 
     [Header("Dodge Roll")]
     [SerializeField] private float dodgeSpeed = 12f;
@@ -20,8 +20,15 @@ public class PlayerController : MonoBehaviour
     [Header("Input Buffer")]
     [SerializeField] private float inputBufferTime = 0.15f;
 
+    [Header("Dodge Effects")]
+    [SerializeField] private float dodgeTrailInterval = 0.05f;
+    [SerializeField] private Color dodgeTrailColor = new Color(0.7f, 0.9f, 1f, 0.5f);
+
     [Header("Debug")]
     [SerializeField] private bool enableDebugLogs = true;
+
+    // Dodge trail
+    private float dodgeTrailTimer = 0;
 
     // Components
     private Rigidbody2D rb;
@@ -86,7 +93,10 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
-        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+        // Allow movement during Playing or Initializing (before game fully starts)
+        if (GameManager.Instance != null &&
+            GameManager.Instance.CurrentState != GameManager.GameState.Playing &&
+            GameManager.Instance.CurrentState != GameManager.GameState.Initializing)
         {
             return;
         }
@@ -98,7 +108,10 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+        // Allow movement during Playing or Initializing
+        if (GameManager.Instance != null &&
+            GameManager.Instance.CurrentState != GameManager.GameState.Playing &&
+            GameManager.Instance.CurrentState != GameManager.GameState.Initializing)
         {
             rb.linearVelocity = Vector2.zero;
             return;
@@ -108,6 +121,14 @@ public class PlayerController : MonoBehaviour
         {
             // During dodge - direct transform movement
             transform.position += new Vector3(facingDirection * dodgeSpeed * Time.fixedDeltaTime, 0, 0);
+
+            // Spawn dodge trail effects
+            dodgeTrailTimer -= Time.fixedDeltaTime;
+            if (dodgeTrailTimer <= 0)
+            {
+                SpawnDodgeTrail();
+                dodgeTrailTimer = dodgeTrailInterval;
+            }
         }
         else
         {
@@ -212,9 +233,28 @@ public class PlayerController : MonoBehaviour
         isInvulnerable = true;
         dodgeTimer = dodgeDuration;
         dodgeCooldownTimer = dodgeCooldown;
+        dodgeTrailTimer = 0; // Spawn trail immediately
 
         if (animator != null)
             animator.SetTrigger(AnimDodge);
+
+        // Play dodge sound
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayPlayerDodge();
+        }
+
+        // Spawn dust puff at start
+        if (ParticleManager.Instance != null)
+        {
+            ParticleManager.Instance.SpawnDustPuff(transform.position + Vector3.down * 0.5f, Color.gray, 5);
+        }
+
+        // Hit feedback for successful dodge
+        if (HitFeedback.Instance != null)
+        {
+            HitFeedback.Instance.DodgeSuccess(transform.position, spriteRenderer?.sprite);
+        }
 
         OnDodgeStart?.Invoke();
     }
@@ -227,7 +267,22 @@ public class PlayerController : MonoBehaviour
             isInvulnerable = false;
 
         currentSpeed = facingDirection * moveSpeed * 0.5f;
+
+        // Spawn dust at end
+        if (ParticleManager.Instance != null)
+        {
+            ParticleManager.Instance.SpawnDustPuff(transform.position + Vector3.down * 0.5f, Color.gray, 3);
+        }
+
         OnDodgeEnd?.Invoke();
+    }
+
+    private void SpawnDodgeTrail()
+    {
+        if (ParticleManager.Instance != null && spriteRenderer != null)
+        {
+            ParticleManager.Instance.SpawnTrailGhost(transform.position, spriteRenderer.sprite, dodgeTrailColor);
+        }
     }
 
     public void GrantIFrames(float duration)
