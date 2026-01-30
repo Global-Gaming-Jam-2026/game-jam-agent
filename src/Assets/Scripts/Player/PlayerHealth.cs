@@ -63,6 +63,12 @@ public class PlayerHealth : MonoBehaviour
         OnHealthChanged?.Invoke(HealthPercent);
         OnDamaged?.Invoke();
 
+        // Audio feedback
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayPlayerHurt();
+        }
+
         // Grant i-frames
         if (playerController != null)
         {

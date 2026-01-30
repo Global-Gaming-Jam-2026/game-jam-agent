@@ -11,7 +11,7 @@ public class LaserBeamPattern : BossAttackPattern
     [SerializeField] private float laserWidth = 0.5f;
     [SerializeField] private float laserLength = 20f;
     [SerializeField] private float sweepAngle = 90f;      // Total sweep arc
-    [SerializeField] private float sweepDuration = 2f;
+    [SerializeField] private float sweepDuration = 3.5f;  // Balanced: 2 → 3.5 (time to dodge)
     [SerializeField] private bool sweepClockwise = true;
 
     [Header("Visuals")]
@@ -30,8 +30,8 @@ public class LaserBeamPattern : BossAttackPattern
     private void Awake()
     {
         patternName = "Laser Beam";
-        damage = 35f;
-        telegraphDuration = 1f;
+        damage = 12f;              // Balanced: 35 → 12 (3 ticks = 36 dmg, survivable)
+        telegraphDuration = 2f;    // Balanced: 1 → 2 (clear warning)
         selectionWeight = 0.8f;
         minPhaseRequired = 2;
     }

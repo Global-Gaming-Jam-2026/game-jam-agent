@@ -18,9 +18,13 @@ public class GameOverUI : MonoBehaviour
     [SerializeField] private Button loseRestartButton;
     [SerializeField] private Button loseMenuButton;
 
-    [Header("Text Content")]
-    [SerializeField] private string winMessage = "VICTORY";
-    [SerializeField] private string loseMessage = "YOU DIED";
+    [Header("Text Content - Themed Messages")]
+    [SerializeField] private string winMessage = "THE MASK IS SILENCED";
+    [SerializeField] private string loseMessage = "CHAOS PREVAILS";
+
+    // Theme colors from GAME_DESIGN.md
+    private static readonly Color SandColor = new Color(0.761f, 0.698f, 0.502f);    // #C2B280
+    private static readonly Color ChaosColor = new Color(0.424f, 0.361f, 0.906f);   // #6C5CE7
 
     [Header("Animation")]
     [SerializeField] private float fadeInDuration = 0.5f;
@@ -102,6 +106,11 @@ public class GameOverUI : MonoBehaviour
     {
         if (winPanel != null)
         {
+            // Apply Sand color (victory theme)
+            if (winText != null)
+            {
+                winText.color = SandColor;
+            }
             winPanel.SetActive(true);
             StartCoroutine(FadeIn(winCanvasGroup));
         }
@@ -111,6 +120,11 @@ public class GameOverUI : MonoBehaviour
     {
         if (losePanel != null)
         {
+            // Apply Chaos purple (defeat theme)
+            if (loseText != null)
+            {
+                loseText.color = ChaosColor;
+            }
             losePanel.SetActive(true);
             StartCoroutine(FadeIn(loseCanvasGroup));
         }

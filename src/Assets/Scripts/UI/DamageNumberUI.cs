@@ -19,12 +19,13 @@ public class DamageNumberUI : MonoBehaviour
     [SerializeField] private float scaleMultiplier = 1f;
     [SerializeField] private float criticalScaleBonus = 0.5f;
 
-    [Header("Colors")]
-    [SerializeField] private Color normalDamageColor = Color.white;
-    [SerializeField] private Color criticalDamageColor = Color.yellow;
-    [SerializeField] private Color bossDamageColor = new Color(1f, 0.5f, 0.2f);
+    [Header("Colors - Official Palette from GAME_DESIGN.md")]
+    [SerializeField] private Color normalDamageColor = new Color(0.761f, 0.698f, 0.502f);  // Sand #C2B280
+    [SerializeField] private Color criticalDamageColor = new Color(0.8f, 0.467f, 0.133f);  // Ochre #CC7722
+    [SerializeField] private Color bossDamageColor = new Color(0.886f, 0.447f, 0.357f);    // Terracotta #E2725B
     [SerializeField] private Color healColor = Color.green;
-    [SerializeField] private Color parryColor = new Color(1f, 0.8f, 0.9f);
+    [SerializeField] private Color parryColor = new Color(1f, 0.843f, 0f);                  // Gold
+    [SerializeField] private Color chaosColor = new Color(0.424f, 0.361f, 0.906f);          // Deep Purple #6C5CE7
 
     [Header("Font Settings")]
     [SerializeField] private int baseFontSize = 32;
@@ -171,7 +172,7 @@ public class DamageNumberUI : MonoBehaviour
         number.Initialize(
             position + Vector3.up * 0.3f,
             "DODGE!",
-            new Color(0.7f, 0.9f, 1f),
+            new Color(0.635f, 0.608f, 0.996f), // Lavender #A29BFE - chaos accent
             floatSpeed * 1.5f,
             lifetime * 0.8f,
             scaleMultiplier * 0.9f
@@ -183,7 +184,10 @@ public class DamageNumberUI : MonoBehaviour
         if (comboCount < 2) return;
 
         var number = GetNumber();
-        Color comboColor = Color.Lerp(Color.yellow, Color.red, Mathf.Min(comboCount / 10f, 1f));
+        // Lerp from Bronze to Ochre for increasing combo
+        Color bronze = new Color(0.804f, 0.498f, 0.196f);
+        Color ochre = new Color(0.8f, 0.467f, 0.133f);
+        Color comboColor = Color.Lerp(bronze, ochre, Mathf.Min(comboCount / 5f, 1f));
         number.Initialize(
             position + Vector3.up * 0.8f + Vector3.right * 0.5f,
             $"{comboCount}x COMBO!",
@@ -210,13 +214,17 @@ public class DamageNumberUI : MonoBehaviour
     public void ShowPhaseChange(Vector3 position, int phaseNumber)
     {
         var number = GetNumber();
+        // Show "CHAOS UNLEASHED!" for phase 2 in chaos purple
+        string text = phaseNumber >= 2 ? "CHAOS UNLEASHED!" : $"PHASE {phaseNumber}!";
+        Color color = phaseNumber >= 2 ? chaosColor : new Color(0.804f, 0.498f, 0.196f); // Chaos purple or Bronze
+
         number.Initialize(
             position + Vector3.up * 2f,
-            $"PHASE {phaseNumber}!",
-            new Color(1f, 0.3f, 0.3f),
-            floatSpeed * 0.5f,
-            lifetime * 2f,
-            scaleMultiplier * 2f
+            text,
+            color,
+            floatSpeed * 0.4f,
+            lifetime * 2.5f,
+            scaleMultiplier * 2.2f
         );
     }
 

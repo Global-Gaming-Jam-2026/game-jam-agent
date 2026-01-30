@@ -15,11 +15,12 @@ public class HitFeedback : MonoBehaviour
     [SerializeField] private float heavyHitstopDuration = 0.08f;
     [SerializeField] private float hitstopTimeScale = 0.05f;
 
-    [Header("Particle Colors")]
-    [SerializeField] private Color playerHitColor = new Color(1f, 0.8f, 0.3f);
-    [SerializeField] private Color playerDamageColor = new Color(1f, 0.3f, 0.2f);
-    [SerializeField] private Color parryColor = new Color(1f, 0.8f, 0.9f);
-    [SerializeField] private Color criticalColor = Color.yellow;
+    [Header("Particle Colors - Official Palette from GAME_DESIGN.md")]
+    [SerializeField] private Color playerHitColor = new Color(0.804f, 0.498f, 0.196f);   // Bronze #CD7F32
+    [SerializeField] private Color playerDamageColor = new Color(0.886f, 0.447f, 0.357f); // Terracotta #E2725B
+    [SerializeField] private Color parryColor = new Color(1f, 0.843f, 0f);                // Gold
+    [SerializeField] private Color criticalColor = new Color(0.8f, 0.467f, 0.133f);       // Ochre #CC7722
+    [SerializeField] private Color chaosColor = new Color(0.424f, 0.361f, 0.906f);        // Deep Purple #6C5CE7
 
     private Coroutine hitstopCoroutine;
 
@@ -108,15 +109,16 @@ public class HitFeedback : MonoBehaviour
                 CameraShake.Instance.ShakeLight();
         }
 
-        // Particles
+        // Particles - Use themed Bronze/Ochre colors
         if (ParticleManager.Instance != null && hitPosition != Vector3.zero)
         {
-            Color color = isCritical ? criticalColor : playerHitColor;
-            ParticleManager.Instance.SpawnHitSparks(hitPosition, color, isCritical ? 12 : 8);
+            // Use official palette themed sparks
+            ParticleManager.Instance.SpawnBronzeHitSparks(hitPosition, isCritical);
 
+            // Also spawn mask fragments when damaging boss
             if (isCritical)
             {
-                ParticleManager.Instance.SpawnImpactBurst(hitPosition, criticalColor, 1.2f);
+                ParticleManager.Instance.SpawnMaskFragment(hitPosition, 4);
             }
         }
 
@@ -147,11 +149,10 @@ public class HitFeedback : MonoBehaviour
             CameraShake.Instance.ShakeMedium();
         }
 
-        // Particles
+        // Particles - Use Terracotta themed effect
         if (ParticleManager.Instance != null && hitPosition != Vector3.zero)
         {
-            ParticleManager.Instance.SpawnHitSparks(hitPosition, playerDamageColor, 10);
-            ParticleManager.Instance.SpawnImpactBurst(hitPosition, playerDamageColor, 0.8f);
+            ParticleManager.Instance.SpawnBossDamageEffect(hitPosition);
         }
 
         // Damage numbers
@@ -224,38 +225,43 @@ public class HitFeedback : MonoBehaviour
     {
         HeavyHitstop();
 
+        // Death effect combines heavy shake + zoom in for dramatic effect
         if (CameraShake.Instance != null)
         {
-            CameraShake.Instance.ShakeHeavy();
+            CameraShake.Instance.DeathEffect();
         }
 
-        // Big death explosion
+        // Big death explosion with Bronze/Ochre theme
         if (ParticleManager.Instance != null && position != Vector3.zero)
         {
             ParticleManager.Instance.SpawnDeathExplosion(position, playerHitColor, criticalColor);
+            // Mask shatters into fragments
+            ParticleManager.Instance.SpawnMaskFragment(position, 20);
+            ParticleManager.Instance.SpawnMaskFragment(position + Vector3.up, 10);
+            ParticleManager.Instance.SpawnMaskFragment(position + Vector3.down, 10);
         }
     }
 
     /// <summary>
-    /// Feedback for boss phase transition
+    /// Feedback for boss phase transition - CHAOS UNLEASHED!
     /// </summary>
     public void BossPhaseTransition(Vector3 position, int phaseNumber)
     {
         HeavyHitstop();
 
-        if (CameraShake.Instance != null)
-        {
-            CameraShake.Instance.ShakeHeavy();
-        }
+        // Note: Camera shake/zoom handled by BossControllerMultiPhase.PhaseTransitionEffect()
+        // We only handle particles and visual effects here
 
-        // Particles
+        // Particles - Use chaos theme colors
         if (ParticleManager.Instance != null)
         {
-            ParticleManager.Instance.SpawnSparkles(position, Color.red, 20);
-            ParticleManager.Instance.SpawnImpactBurst(position, Color.red, 2f);
+            // Corruption burst for chaos theme
+            ParticleManager.Instance.SpawnCorruptionBurst(position, 2f);
+            ParticleManager.Instance.SpawnChaosSwirl(position, 12);
+            ParticleManager.Instance.SpawnSparkles(position, chaosColor, 20);
         }
 
-        // UI
+        // UI - Shows "CHAOS UNLEASHED!"
         if (DamageNumberUI.Instance != null)
         {
             DamageNumberUI.Instance.ShowPhaseChange(position, phaseNumber);

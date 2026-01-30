@@ -24,8 +24,8 @@ public class SlamAttack : BossAttackPattern
     private void Awake()
     {
         patternName = "Slam";
-        damage = 45f;
-        telegraphDuration = 0.7f;
+        damage = 20f;              // Balanced: 45 → 20 (not instant death)
+        telegraphDuration = 1.5f;  // Balanced: 0.7 → 1.5 (readable telegraph)
         attackDuration = 0.2f;
         selectionWeight = 1.5f;
         minPhaseRequired = 1;
@@ -155,10 +155,10 @@ public class SlamAttack : BossAttackPattern
             // Deal damage in radius
             DealDamageToPlayer(slamTarget, new Vector2(slamRadius * 2, slamRadius), damage);
 
-            // Heavy screen shake
+            // Heavy screen shake + zoom pulse for impact
             if (CameraShake.Instance != null)
             {
-                CameraShake.Instance.ShakeBossAttack();
+                CameraShake.Instance.BossSlamImpact();
             }
 
             // Impact effect

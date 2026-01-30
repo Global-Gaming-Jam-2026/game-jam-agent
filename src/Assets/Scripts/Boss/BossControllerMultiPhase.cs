@@ -32,6 +32,10 @@ public class BossControllerMultiPhase : MonoBehaviour
     private BossAttackPattern currentPattern;
     private float stateTimer;
     private bool isInitialized;
+    private Coroutine chaosAmbientCoroutine;
+
+    // Chaos theme colors
+    private static readonly Color ChaosTint = new Color(0.7f, 0.6f, 0.9f); // Subtle purple tint for phase 2+
 
     // Animation hashes
     private static readonly int AnimState = Animator.StringToHash("State");
@@ -259,16 +263,21 @@ public class BossControllerMultiPhase : MonoBehaviour
             // Could add invulnerability flag to BossHealth
         }
 
-        // Screen shake
+        // Screen shake + zoom pulse for dramatic effect
         if (newPhase.screenShakeOnTransition && CameraShake.Instance != null)
         {
-            CameraShake.Instance.ShakeHeavy();
+            CameraShake.Instance.PhaseTransitionEffect();
         }
 
         // Play transform sound
         if (newPhase.transformSound != null)
         {
             AudioSource.PlayClipAtPoint(newPhase.transformSound, transform.position);
+        }
+        else if (AudioManager.Instance != null)
+        {
+            // Use procedural audio fallback
+            AudioManager.Instance.PlayBossPhaseTransition();
         }
 
         // Flash white during transformation
@@ -291,6 +300,12 @@ public class BossControllerMultiPhase : MonoBehaviour
             animator.SetInteger(AnimPhase, currentPhaseIndex);
         }
 
+        // Start chaos ambient effects for phase 2+
+        if (currentPhaseIndex >= 1 && chaosAmbientCoroutine == null)
+        {
+            chaosAmbientCoroutine = StartCoroutine(ChaosAmbientEffects());
+        }
+
         OnPhaseChanged?.Invoke(currentPhaseIndex, newPhase);
         OnTransformComplete?.Invoke();
 
@@ -298,24 +313,73 @@ public class BossControllerMultiPhase : MonoBehaviour
         SetState(BossState.Idle);
     }
 
+    /// <summary>
+    /// Spawn ambient chaos particles during Phase 2+ to express the "Chaos" theme
+    /// </summary>
+    private IEnumerator ChaosAmbientEffects()
+    {
+        while (currentState != BossState.Dead)
+        {
+            if (GameManager.Instance != null && GameManager.Instance.CurrentState == GameManager.GameState.Playing)
+            {
+                // Spawn chaos ambient particles around boss
+                if (ParticleManager.Instance != null)
+                {
+                    ParticleManager.Instance.SpawnChaosAmbient(transform.position);
+                }
+
+                // Subtle purple tint pulse on sprite
+                if (spriteRenderer != null && currentPhaseIndex >= 1)
+                {
+                    float pulse = 0.9f + Mathf.Sin(Time.time * 2f) * 0.1f;
+                    spriteRenderer.color = new Color(pulse, pulse * 0.9f, 1f);
+                }
+            }
+
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
     private IEnumerator FlashTransformation(float duration)
     {
         Color originalColor = spriteRenderer.color;
+        Color chaosColor = new Color(0.424f, 0.361f, 0.906f); // Deep Purple #6C5CE7
         float elapsed = 0;
         float flashRate = 0.1f;
         bool white = true;
 
+        // Trigger chaos phase transition feedback
+        if (HitFeedback.Instance != null)
+        {
+            HitFeedback.Instance.BossPhaseTransition(transform.position, currentPhaseIndex + 1);
+        }
+
         while (elapsed < duration * 0.7f)
         {
-            spriteRenderer.color = white ? Color.white : originalColor;
+            // Flash between white and chaos purple for dramatic effect
+            spriteRenderer.color = white ? Color.white : chaosColor;
             white = !white;
+
+            // Spawn chaos particles during transformation
+            if (ParticleManager.Instance != null)
+            {
+                ParticleManager.Instance.SpawnChaosSwirl(transform.position, 4);
+            }
+
             yield return new WaitForSeconds(flashRate);
             elapsed += flashRate;
             flashRate *= 0.9f; // Speed up flashing
         }
 
-        // Hold white briefly
-        spriteRenderer.color = Color.white;
+        // Hold chaos purple briefly before applying new form
+        spriteRenderer.color = chaosColor;
+
+        // Big corruption burst at climax
+        if (ParticleManager.Instance != null)
+        {
+            ParticleManager.Instance.SpawnCorruptionBurst(transform.position, 1.5f);
+        }
+
         yield return new WaitForSeconds(duration * 0.3f);
 
         spriteRenderer.color = originalColor;
@@ -348,10 +412,29 @@ public class BossControllerMultiPhase : MonoBehaviour
     {
         SetState(BossState.Dead);
 
+        // Stop chaos effects
+        if (chaosAmbientCoroutine != null)
+        {
+            StopCoroutine(chaosAmbientCoroutine);
+            chaosAmbientCoroutine = null;
+        }
+
+        // Reset sprite color
+        if (spriteRenderer != null)
+        {
+            spriteRenderer.color = Color.white;
+        }
+
         // Play death sound
         if (currentPhase != null && currentPhase.deathSound != null)
         {
             AudioSource.PlayClipAtPoint(currentPhase.deathSound, transform.position);
+        }
+
+        // Trigger death feedback
+        if (HitFeedback.Instance != null)
+        {
+            HitFeedback.Instance.BossDeathFeedback(transform.position);
         }
 
         if (GameManager.Instance != null)

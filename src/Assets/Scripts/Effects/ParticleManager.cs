@@ -213,6 +213,153 @@ public class ParticleManager : MonoBehaviour
 
     #endregion
 
+    #region Chaos Theme Effects
+
+    // Official colors from GAME_DESIGN.md
+    private static readonly Color ChaosPurple = new Color(0.424f, 0.361f, 0.906f);  // #6C5CE7
+    private static readonly Color ChaosLavender = new Color(0.635f, 0.608f, 0.996f); // #A29BFE
+    private static readonly Color ChaosCrimson = new Color(0.863f, 0.078f, 0.235f);  // #DC143C
+    private static readonly Color Bronze = new Color(0.804f, 0.498f, 0.196f);        // #CD7F32
+    private static readonly Color Terracotta = new Color(0.886f, 0.447f, 0.357f);    // #E2725B
+    private static readonly Color Ochre = new Color(0.8f, 0.467f, 0.133f);           // #CC7722
+
+    /// <summary>
+    /// Spawn spiraling chaos particles during Phase 2
+    /// </summary>
+    public void SpawnChaosSwirl(Vector3 position, int count = 8)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            var particle = GetParticle();
+            float angle = (360f / count) * i * Mathf.Deg2Rad + Time.time;
+            float radius = Random.Range(0.5f, 1.5f);
+            Vector3 offset = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0) * radius;
+
+            // Spiral outward velocity
+            float speed = Random.Range(1f, 3f);
+            Vector2 velocity = new Vector2(Mathf.Cos(angle + 0.5f), Mathf.Sin(angle + 0.5f)) * speed;
+
+            Color color = i % 2 == 0 ? ChaosPurple : ChaosLavender;
+
+            particle.Initialize(
+                position + offset,
+                sparkleSprite,
+                color,
+                velocity,
+                Random.Range(0.2f, 0.5f),
+                Random.Range(0.8f, 1.5f),
+                false,
+                0.7f
+            );
+        }
+    }
+
+    /// <summary>
+    /// Spawn corruption burst when chaos intensifies
+    /// </summary>
+    public void SpawnCorruptionBurst(Vector3 position, float scale = 1f)
+    {
+        // Central crimson burst
+        SpawnImpactBurst(position, ChaosCrimson, scale);
+
+        // Outer purple sparks
+        for (int i = 0; i < 10; i++)
+        {
+            var particle = GetParticle();
+            float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+            float speed = Random.Range(4f, 10f);
+            Vector2 velocity = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed;
+
+            particle.Initialize(
+                position,
+                hitSparkSprite,
+                i % 3 == 0 ? ChaosCrimson : ChaosPurple,
+                velocity,
+                Random.Range(0.3f, 0.6f),
+                Random.Range(0.4f, 0.8f),
+                true,
+                0.8f
+            );
+        }
+    }
+
+    /// <summary>
+    /// Spawn golden mask fragments when boss takes damage
+    /// </summary>
+    public void SpawnMaskFragment(Vector3 position, int count = 6)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            var particle = GetParticle();
+            float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+            float speed = Random.Range(3f, 8f);
+            Vector2 velocity = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed;
+
+            Color color = i % 3 == 0 ? Ochre : Bronze;
+
+            particle.Initialize(
+                position + (Vector3)Random.insideUnitCircle * 0.3f,
+                hitSparkSprite,
+                color,
+                velocity,
+                Random.Range(0.4f, 0.8f),
+                Random.Range(0.6f, 1.2f),
+                true,
+                0.6f
+            );
+        }
+    }
+
+    /// <summary>
+    /// Spawn slow drifting ambient chaos particles
+    /// </summary>
+    public void SpawnChaosAmbient(Vector3 position)
+    {
+        var particle = GetParticle();
+        float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+        float speed = Random.Range(0.5f, 1.5f);
+        Vector2 velocity = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * speed;
+
+        Color color = Random.value > 0.5f ? ChaosPurple : new Color(ChaosPurple.r, ChaosPurple.g, ChaosPurple.b, 0.3f);
+
+        particle.Initialize(
+            position + (Vector3)Random.insideUnitCircle * 2f,
+            dustPuffSprite,
+            color,
+            velocity,
+            Random.Range(0.2f, 0.4f),
+            Random.Range(2f, 4f),
+            false,
+            0.5f
+        );
+    }
+
+    /// <summary>
+    /// Spawn themed hit sparks using official Bronze palette
+    /// </summary>
+    public void SpawnBronzeHitSparks(Vector3 position, bool isCritical = false)
+    {
+        Color color = isCritical ? Ochre : Bronze;
+        int count = isCritical ? 12 : 8;
+        SpawnHitSparks(position, color, count);
+
+        if (isCritical)
+        {
+            SpawnImpactBurst(position, Ochre, 0.8f);
+        }
+    }
+
+    /// <summary>
+    /// Spawn terracotta burst when boss damages player
+    /// </summary>
+    public void SpawnBossDamageEffect(Vector3 position)
+    {
+        SpawnHitSparks(position, Terracotta, 10);
+        SpawnImpactBurst(position, Terracotta, 0.6f);
+    }
+
+    #endregion
+
     #region Sprite Generation
 
     private Sprite CreateSparkSprite()

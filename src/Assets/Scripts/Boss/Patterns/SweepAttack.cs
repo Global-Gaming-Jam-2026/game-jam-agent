@@ -26,8 +26,8 @@ public class SweepAttack : BossAttackPattern
     private void Awake()
     {
         patternName = "Sweep";
-        damage = 30f;
-        telegraphDuration = 0.5f;
+        damage = 25f;              // Balanced: 30 → 25 (fair damage)
+        telegraphDuration = 1.0f;  // Balanced: 0.5 → 1.0 (readable telegraph)
         attackDuration = 0.4f;
         selectionWeight = 2f;
         minPhaseRequired = 1;

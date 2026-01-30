@@ -95,7 +95,7 @@ public class IntroSequence : MonoBehaviour
         titleText.text = "MASK OF THE BRONZE GOD";
         titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         titleText.fontSize = 72;
-        titleText.color = new Color(0.8f, 0.5f, 0.2f);
+        titleText.color = new Color(0.804f, 0.498f, 0.196f); // Official Bronze #CD7F32
         titleText.alignment = TextAnchor.MiddleCenter;
         titleText.rectTransform.anchorMin = new Vector2(0, 0.5f);
         titleText.rectTransform.anchorMax = new Vector2(1, 0.7f);
@@ -119,7 +119,7 @@ public class IntroSequence : MonoBehaviour
         bossNameText.text = "";
         bossNameText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         bossNameText.fontSize = 56;
-        bossNameText.color = new Color(1f, 0.3f, 0.2f);
+        bossNameText.color = new Color(0.886f, 0.447f, 0.357f); // Official Terracotta #E2725B (danger)
         bossNameText.alignment = TextAnchor.MiddleCenter;
         bossNameText.rectTransform.anchorMin = new Vector2(0, 0.15f);
         bossNameText.rectTransform.anchorMax = new Vector2(1, 0.35f);

@@ -54,7 +54,7 @@ public class GameSceneSetup : MonoBehaviour
         var cam = camObj.AddComponent<Camera>();
         cam.orthographic = true;
         cam.orthographicSize = 6f;  // Wider view for more arena visibility
-        cam.backgroundColor = new Color(0.1f, 0.1f, 0.15f);
+        cam.backgroundColor = new Color(0.239f, 0.161f, 0.078f); // Dark Bronze #3D2914 from GAME_DESIGN.md
         cam.clearFlags = CameraClearFlags.SolidColor;
         camObj.transform.position = new Vector3(0, 0, -10);
 
@@ -133,7 +133,7 @@ public class GameSceneSetup : MonoBehaviour
         ground.transform.localScale = new Vector3(26, 1, 1);  // Wider ground
 
         var groundSR = ground.AddComponent<SpriteRenderer>();
-        groundSR.color = new Color(0.25f, 0.2f, 0.15f);
+        groundSR.color = new Color(0.35f, 0.22f, 0.1f); // Dark bronze ground, slightly lighter than background
         groundSR.sortingOrder = -10;
         // Create simple ground sprite
         Texture2D tex = new Texture2D(4, 4);

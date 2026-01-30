@@ -77,6 +77,12 @@ public class BossHealth : MonoBehaviour
         OnHealthChanged?.Invoke(HealthPercent);
         OnDamaged?.Invoke();
 
+        // Audio feedback
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayBossHurt();
+        }
+
         // Visual feedback
         FlashDamage();
 
@@ -117,10 +123,16 @@ public class BossHealth : MonoBehaviour
     {
         OnDeath?.Invoke();
 
-        // Heavy screen shake
+        // Play death sound
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayBossDeath();
+        }
+
+        // Death camera effect (shake + zoom)
         if (CameraShake.Instance != null)
         {
-            CameraShake.Instance.ShakeBossAttack();
+            CameraShake.Instance.DeathEffect();
         }
     }
 

@@ -49,6 +49,10 @@ public class PlayerCombat : MonoBehaviour
     {
         playerController = GetComponent<PlayerController>();
         animator = GetComponent<Animator>();
+
+        // Initialize enemyLayer if not set in inspector - Boss uses Default layer
+        if (enemyLayer == 0)
+            enemyLayer = LayerMask.GetMask("Default");
     }
 
     private void Update()
@@ -168,6 +172,12 @@ public class PlayerCombat : MonoBehaviour
             animator.SetTrigger(AnimAttack);
         }
 
+        // Play attack sound with combo variation
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayPlayerAttack(currentCombo);
+        }
+
         OnAttackStartCombo?.Invoke(currentCombo);
         OnAttackStart?.Invoke();
     }
@@ -225,13 +235,26 @@ public class PlayerCombat : MonoBehaviour
                 health.TakeDamage(finalDamage);
                 OnAttackHit?.Invoke();
 
+                // Play hit confirmation sound
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayPlayerHit(isCritical);
+                }
+
                 // Trigger hit feedback with position and damage
                 TriggerHitFeedback(hitPosition, finalDamage, isCritical);
 
                 // Combo finisher effect
-                if (isCritical && HitFeedback.Instance != null)
+                if (isCritical)
                 {
-                    HitFeedback.Instance.ComboFinisher(hitPosition, currentCombo);
+                    if (AudioManager.Instance != null)
+                    {
+                        AudioManager.Instance.PlayComboFinish();
+                    }
+                    if (HitFeedback.Instance != null)
+                    {
+                        HitFeedback.Instance.ComboFinisher(hitPosition, currentCombo);
+                    }
                 }
             }
         }
